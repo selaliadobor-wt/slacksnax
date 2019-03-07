@@ -1,0 +1,22 @@
+{
+    "name": "slacksnax-v2",
+    "version": "1.0.0",
+    "description": "",
+    "main": "dist/src/server.js",
+    "scripts": {
+        "build-ts": "tsc",
+        "postinstall": "npm run build-ts",
+        "start": "npm run serve",
+        "serve": "node dist/src/server.js",
+        "watch-node": "nodemon dist/src/server.js",
+        "watch-ts": "tsc -w",
+        "lint": "tslint -c tslint.json 'src/**/*.ts'"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "prettier": "^1.16.4",
+        "tslint-config-prettier": "^1.18.0",
+        "tslint-plugin-prettier": "^2.0.1"
+    }
+}
