@@ -2,13 +2,13 @@
     "name": "slacksnax-v2",
     "version": "1.0.0",
     "description": "",
-    "main": "dist/src/server.js",
+    "main": "dist/server.js",
     "scripts": {
         "build-ts": "tsc",
         "postinstall": "npm run build-ts",
         "start": "npm run serve",
-        "serve": "node dist/src/server.js",
-        "watch-node": "nodemon dist/src/server.js",
+        "serve": "node dist/server.js",
+        "watch-node": "nodemon dist/server.js",
         "watch-ts": "tsc -w",
         "lint": "tslint -c tslint.json 'src/**/*.ts'"
     },
@@ -17,6 +17,12 @@
     "devDependencies": {
         "prettier": "^1.16.4",
         "tslint-config-prettier": "^1.18.0",
-        "tslint-plugin-prettier": "^2.0.1"
+        "tslint-plugin-prettier": "^2.0.1",
+        "typescript": "^3.3.3333"
+    },
+    "dependencies": {
+        "@types/node": "^11.10.5",
+        "dotenv": "^6.2.0",
+        "fastify": "^2.0.1"
     }
 }
