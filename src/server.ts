@@ -1,12 +1,23 @@
-import * as fastify from "fastify";
-
+import fastify from "fastify";
+import mongoose from "mongoose";
+import fastifyMongoose from "./plugins/fastifyMongoose";
 require("dotenv").config();
+
+const monogoUri = process.env.MONGODB_URI;
+if (monogoUri == null) {
+    throw new Error("MONGODB_URI not set");
+}
+(<any>mongoose).Promise = global.Promise;
 
 const port = Number(process.env.PORT) || 1234;
 
-const server: fastify.FastifyInstance = fastify.default({
-    logger: "trace",
+const server = fastify({
+    logger: {
+        level: "trace",
+    },
 });
+
+server.register(fastifyMongoose, monogoUri);
 
 server.get("/", async () => {
     return "Hello World!";
@@ -20,11 +31,7 @@ const start = async () => {
 
         let address = server.server.address();
 
-        if (address === undefined) {
-            throw new Error("Failed to bind to address");
-        } else {
-            server.log.info(`Listening on ${address!.port}`);
-        }
+        server.log.info(`Listening on ${address}`);
     } catch (err) {
         server.log.error(err);
         process.exit(1);
