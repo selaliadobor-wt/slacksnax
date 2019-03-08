@@ -21,6 +21,8 @@ server.register(require("fastify-formbody"));
 server.register(fastifyMongoose, monogoUri);
 
 server.register(require("./slack/authRoute"));
+server.register(require("./slack/snackSearchRoute"));
+
 server.get("/", async () => {
     return "Hello World!";
 });
@@ -41,3 +43,6 @@ const start = async () => {
 };
 
 start();
+
+const logger = server.log;
+export { logger };
