@@ -17,8 +17,10 @@ const server = fastify({
     },
 });
 
+server.register(require("fastify-formbody"));
 server.register(fastifyMongoose, monogoUri);
 
+server.register(require("./slack/authRoute"));
 server.get("/", async () => {
     return "Hello World!";
 });
@@ -31,7 +33,7 @@ const start = async () => {
 
         let address = server.server.address();
 
-        server.log.info(`Listening on ${address}`);
+        server.log.info(`Listening on ${JSON.stringify(address)}`);
     } catch (err) {
         server.log.error(err);
         process.exit(1);
