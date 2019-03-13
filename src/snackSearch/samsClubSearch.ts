@@ -1,14 +1,16 @@
 import * as rp from "request-promise";
 import { logger } from "../server";
-import { SnackSearchEngine } from "./searchEngine";
+import SnackSearchEngine from "./searchEngine";
 
 const searchEndpoint = "https://www.samsclub.com/api/node/vivaldi/v1/products/search/";
 const productEndpoint = "https://www.samsclub.com/api/node/vivaldi/v1/products/";
 const apiUserAgent =
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36";
 
-class SamsClubSearchEngine implements SnackSearchEngine {
-    async search(queryText: string): Promise<Snack[]> {
+class SamsClubSearchEngine extends SnackSearchEngine {
+    engineName: String = "sams-club";
+
+    async uncachedSearch(queryText: string): Promise<Snack[]> {
         logger.info(`Searching Sam's Club for ${queryText} at ${searchEndpoint}`);
 
         let response = await rp.get(searchEndpoint, {

@@ -24,6 +24,7 @@
     },
     "dependencies": {
         "@slack/client": "^4.10.0",
+        "@types/ioredis": "^4.0.10",
         "@types/node": "^11.10.5",
         "@types/request-promise": "^4.1.42",
         "@types/string-similarity": "^3.0.0",
@@ -31,6 +32,7 @@
         "fastify": "^2.0.1",
         "fastify-formbody": "^3.1.0",
         "http": "0.0.0",
+        "ioredis": "^4.6.2",
         "mongoose": "^5.4.17",
         "reflect-metadata": "^0.1.13",
         "request": "^2.88.0",

@@ -1,13 +1,15 @@
 import * as rp from "request-promise";
 import { logger } from "../server";
-import { SnackSearchEngine } from "./searchEngine";
+import SnackSearchEngine from "./searchEngine";
 
 const searchEndpoint = "https://api.shipt.com/search/v2/search/";
 const apiUserAgent =
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36";
 
-class ShiptSearchEngine implements SnackSearchEngine {
-    async search(queryText: string): Promise<Snack[]> {
+class ShiptSearchEngine extends SnackSearchEngine {
+    engineName: String = "shipt";
+
+    async uncachedSearch(queryText: string): Promise<Snack[]> {
         logger.info(`Searching Shipt for ${queryText} at ${searchEndpoint}`);
 
         let response = await rp.post(searchEndpoint, {

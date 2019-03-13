@@ -3,7 +3,7 @@ import { Server, IncomingMessage, ServerResponse } from "http";
 import { WebClient, WebAPICallResult } from "@slack/client";
 import { Team, TeamModel } from "../models/team";
 import { flatten } from "../util";
-import { searchAllEngines } from "../snackSearch/searchEngine";
+import { searchAllEngines } from "../snackSearch/searchEngineUtils";
 const web = new WebClient();
 
 interface SlackSlashCommandRequestBody {
