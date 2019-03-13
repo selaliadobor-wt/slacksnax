@@ -7,7 +7,7 @@ const apiUserAgent =
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36";
 
 class BoxedSearch implements SnackSearchEngine {
-    async search(queryText: String): Promise<Snack[] | undefined> {
+    async search(queryText: string): Promise<Snack[]> {
         let searchUrl = boxedApiUrl + encodeURIComponent(queryText.trim());
 
         logger.info(`Searching Boxed for ${queryText} at ${searchUrl}`);
@@ -24,7 +24,7 @@ class BoxedSearch implements SnackSearchEngine {
                 `Searching Boxed for ${queryText} at ${searchUrl} failed, invalid response`,
                 response
             );
-            return undefined;
+            return [];
         }
 
         logger.debug(

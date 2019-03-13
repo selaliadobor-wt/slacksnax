@@ -8,7 +8,7 @@ const apiUserAgent =
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36";
 
 class SamsClubSearchEngine implements SnackSearchEngine {
-    async search(queryText: String): Promise<Snack[] | undefined> {
+    async search(queryText: string): Promise<Snack[]> {
         logger.info(`Searching Sam's Club for ${queryText} at ${searchEndpoint}`);
 
         let response = await rp.get(searchEndpoint, {
@@ -33,7 +33,7 @@ class SamsClubSearchEngine implements SnackSearchEngine {
                 `Searching Sam's Club for ${queryText} at ${searchEndpoint} failed, invalid response`,
                 response
             );
-            return undefined;
+            return [];
         }
 
         logger.debug(

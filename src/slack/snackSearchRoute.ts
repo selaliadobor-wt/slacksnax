@@ -2,20 +2,14 @@ import * as fastify from "fastify";
 import { Server, IncomingMessage, ServerResponse } from "http";
 import { WebClient, WebAPICallResult } from "@slack/client";
 import { Team, TeamModel } from "../models/team";
-
-import { defaultSearchEngine } from "../snackSearch/searchEngine";
+import { flatten } from "../util";
+import { searchAllEngines } from "../snackSearch/searchEngine";
 const web = new WebClient();
 
 interface SlackSlashCommandRequestBody {
-    text: String;
-    user_id: String;
-    user_name: String;
-}
-
-function flatten<T>(arr: Array<T>): Array<T> {
-    return arr.reduce(function(flat: Array<T>, toFlatten) {
-        return flat.concat(Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten);
-    }, []);
+    text: string;
+    user_id: string;
+    user_name: string;
 }
 
 function getSlackTextForSnack(snack: Snack): Array<any> {
@@ -52,7 +46,7 @@ export = <fastify.Plugin<Server, IncomingMessage, ServerResponse, never>>async f
         let text = request.body["text"];
 
         try {
-            let searchResults = await defaultSearchEngine.default.search(text);
+            let searchResults = await searchAllEngines(text);
             if (!searchResults) {
                 searchResults = []; //TODO: Handle empty response
             }
