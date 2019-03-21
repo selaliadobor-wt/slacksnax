@@ -2,6 +2,7 @@ import fastify from "fastify";
 import mongoose from "mongoose";
 import fastifyMongoose from "./plugins/fastifyMongoose";
 import { fastifyRedisPlugin } from "./redis";
+import { ActionManagerInstance } from "./slack/actions/actionManager";
 require("dotenv").config();
 
 const monogoUri = process.env.MONGODB_URI;
@@ -21,6 +22,7 @@ const server = fastify({
 server.register(require("fastify-formbody"));
 server.register(fastifyMongoose, monogoUri);
 server.register(fastifyRedisPlugin);
+server.register(ActionManagerInstance.route());
 server.register(require("./slack/authRoute"));
 server.register(require("./slack/snackSearchRoute"));
 
