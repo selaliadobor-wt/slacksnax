@@ -82,7 +82,7 @@ class ActionManager {
         });
     }
 
-    route(): fastify.Plugin<Server, IncomingMessage, ServerResponse, never> {
+    routes(): fastify.Plugin<Server, IncomingMessage, ServerResponse, never> {
         return async (instance: fastify.FastifyInstance) =>
             instance.post<fastify.DefaultQuery, fastify.DefaultParams, fastify.DefaultHeaders, { payload: string }>(
                 "/slackInteractiveActions",
