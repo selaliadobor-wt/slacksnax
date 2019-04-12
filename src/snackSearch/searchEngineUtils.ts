@@ -3,6 +3,7 @@ import SamsClubSearch from "./samsClubSearch";
 import ShiptSearchEngine from "./shiptSearch";
 import SnackSearchEngine from "./searchEngine";
 import { flatten } from "../util";
+import { Snack } from "./snack";
 
 const searchEngines = [ShiptSearchEngine, BoxedSearch, SamsClubSearch];
 const defaultSearchEngine = ShiptSearchEngine;

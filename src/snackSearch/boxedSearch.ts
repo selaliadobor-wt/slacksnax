@@ -1,6 +1,7 @@
 import * as rp from "request-promise";
 import { logger } from "../server";
 import SnackSearchEngine from "./searchEngine";
+import { Snack } from "./snack";
 
 const boxedApiUrl = "https://www.boxed.com/api/search/";
 const apiUserAgent =
@@ -22,16 +23,11 @@ class BoxedSearch extends SnackSearchEngine {
         let products = response["data"]["productListEntities"];
 
         if (!products) {
-            logger.debug(
-                `Searching Boxed for ${queryText} at ${searchUrl} failed, invalid response`,
-                response
-            );
+            logger.debug(`Searching Boxed for ${queryText} at ${searchUrl} failed, invalid response`, response);
             return [];
         }
 
-        logger.debug(
-            `Searching Boxed for ${queryText} at ${searchUrl} returned ${products.length} products`
-        );
+        logger.debug(`Searching Boxed for ${queryText} at ${searchUrl} returned ${products.length} products`);
 
         return products.map((product: any) => {
             return <Snack>{

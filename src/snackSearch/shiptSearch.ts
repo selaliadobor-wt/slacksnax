@@ -1,6 +1,7 @@
 import * as rp from "request-promise";
 import { logger } from "../server";
 import SnackSearchEngine from "./searchEngine";
+import { Snack } from "./snack";
 
 const searchEndpoint = "https://api.shipt.com/search/v2/search/";
 const apiUserAgent =
@@ -34,18 +35,11 @@ class ShiptSearchEngine extends SnackSearchEngine {
         let products = <Array<any>>response["hits"];
 
         if (!products) {
-            logger.debug(
-                `Searching Shipt for ${queryText} at ${searchEndpoint} failed, invalid response`,
-                response
-            );
+            logger.debug(`Searching Shipt for ${queryText} at ${searchEndpoint} failed, invalid response`, response);
             return [];
         }
 
-        logger.debug(
-            `Searching Shipt for ${queryText} at ${searchEndpoint} returned ${
-                products.length
-            } products`
-        );
+        logger.debug(`Searching Shipt for ${queryText} at ${searchEndpoint} returned ${products.length} products`);
         let snacks = await Promise.all(
             products.map(async (product: any) => {
                 return <Snack>{

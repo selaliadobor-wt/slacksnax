@@ -1,6 +1,7 @@
 import * as rp from "request-promise";
 import { logger } from "../server";
 import SnackSearchEngine from "./searchEngine";
+import { Snack } from "./snack";
 
 const searchEndpoint = "https://www.samsclub.com/api/node/vivaldi/v1/products/search/";
 const productEndpoint = "https://www.samsclub.com/api/node/vivaldi/v1/products/";
@@ -38,11 +39,7 @@ class SamsClubSearchEngine extends SnackSearchEngine {
             return [];
         }
 
-        logger.debug(
-            `Searching Sam's Club for ${queryText} at ${searchEndpoint} returned ${
-                products.length
-            } products`
-        );
+        logger.debug(`Searching Sam's Club for ${queryText} at ${searchEndpoint} returned ${products.length} products`);
         let snacks = await Promise.all(
             products.map(async (product: any) => {
                 let productUrl = productEndpoint + product["productId"];
@@ -53,10 +50,7 @@ class SamsClubSearchEngine extends SnackSearchEngine {
                 let payload = response["payload"];
                 return <Snack>{
                     friendlyName: payload["productName"].split("(")[0], //Remove sizing information from names
-                    brand:
-                        payload["brandName"] == null
-                            ? payload["productName"]
-                            : payload["brandName"].trim(),
+                    brand: payload["brandName"] == null ? payload["productName"] : payload["brandName"].trim(),
                     description: payload["longDescription"] || payload["shortDescription"],
                     tags:
                         payload["keywords"] == null
@@ -64,10 +58,7 @@ class SamsClubSearchEngine extends SnackSearchEngine {
                             : payload["keywords"].split(",").map((tag: String) => tag.trim()),
                     imageUrl: "https:" + payload["listImage"],
                     upc: payload["skuOptions"][0]["upc"],
-                    productUrls: new Map([
-                        ["samsClubId", payload["productId"]],
-                        ["samsClubApiUrl", productUrl],
-                    ]),
+                    productUrls: new Map([["samsClubId", payload["productId"]], ["samsClubApiUrl", productUrl]]),
                 };
             })
         );

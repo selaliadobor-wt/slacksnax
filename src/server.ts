@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import fastifyMongoose from "./plugins/fastifyMongoose";
 import { fastifyRedisPlugin } from "./redis";
 import { ActionManagerInstance } from "./slack/actions/actionManager";
+import { SlashCommandManagerInstance } from "./slack/slashCommandManager";
 require("dotenv").config();
 
 const monogoUri = process.env.MONGODB_URI;
@@ -19,12 +20,17 @@ const server = fastify({
     },
 });
 
+SlashCommandManagerInstance.setFastifyInstance(server);
+
+require("./snackSearch/snackSearchRoute");
+require("./requests/userLocationRoute");
+
 server.register(require("fastify-formbody"));
 server.register(fastifyMongoose, monogoUri);
 server.register(fastifyRedisPlugin);
+
 server.register(ActionManagerInstance.route());
 server.register(require("./slack/authRoute"));
-server.register(require("./slack/snackSearchRoute"));
 
 server.get("/", async () => {
     return "Hello World!";

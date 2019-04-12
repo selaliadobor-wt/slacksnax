@@ -1,4 +1,4 @@
-interface Snack {
+export interface Snack {
     friendlyName: string;
     genericName: string | null;
     tags: string[] | null;

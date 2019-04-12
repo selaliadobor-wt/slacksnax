@@ -1,6 +1,7 @@
 import { compareTwoStrings } from "string-similarity";
 import { logger } from "../server";
 import { redis } from "../redis";
+import { Snack } from "./snack";
 
 abstract class SnackSearchEngine {
     private static searchCacheTtl = 60 * 60 * 10; //Seconds * Minutes * Hours
@@ -44,32 +45,19 @@ abstract class SnackSearchEngine {
         try {
             let cachedSnacks = await redis.get(searchCacheKey);
             if (cachedSnacks != null) {
-                logger.info(
-                    `Returning results for "${queryText}" from cache key "${searchCacheKey}"`
-                );
+                logger.info(`Returning results for "${queryText}" from cache key "${searchCacheKey}"`);
                 return SnackSearchEngine.sortByBestResult(queryText, JSON.parse(cachedSnacks));
             }
         } catch (err) {
-            logger.error(
-                `Failed to get results for "${queryText}" from cache key "${searchCacheKey}"`,
-                err
-            );
+            logger.error(`Failed to get results for "${queryText}" from cache key "${searchCacheKey}"`, err);
         }
 
         let snacks = await this.uncachedSearch(queryText);
         try {
-            await redis.set(
-                searchCacheKey,
-                JSON.stringify(snacks),
-                "ex",
-                SnackSearchEngine.searchCacheTtl
-            );
+            await redis.set(searchCacheKey, JSON.stringify(snacks), "ex", SnackSearchEngine.searchCacheTtl);
             logger.info(`Wrote key "${searchCacheKey}" for "${queryText}" to Redis`);
         } catch (err) {
-            logger.error(
-                `Failed to write key "${searchCacheKey}" for "${queryText}" to Redis`,
-                err
-            );
+            logger.error(`Failed to write key "${searchCacheKey}" for "${queryText}" to Redis`, err);
         }
 
         return SnackSearchEngine.sortByBestResult(queryText, snacks);

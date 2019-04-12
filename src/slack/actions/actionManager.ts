@@ -2,14 +2,19 @@ import Redis from "ioredis";
 import * as fastify from "fastify";
 import { Server, IncomingMessage, ServerResponse } from "http";
 import { WebClient, WebAPICallResult } from "@slack/client";
-import { SlackInteractiveActionPayload } from "../slackUtils";
 import { logger } from "../../server";
-import { redis } from "../../redis";
-
 import uuid from "uuid/v4";
+import { Definitions } from "typed-slack-client/slackTypes";
+import { redis } from "../../redis";
 type ActionCallback = (
-    payload: SlackInteractiveActionPayload,
+    payload: Definitions.InteractiveActions.Payload,
     reply: fastify.FastifyReply<ServerResponse>
+) => Promise<void>;
+type ContextIdActionCallback = (
+    payload: Definitions.InteractiveActions.Payload,
+    reply: fastify.FastifyReply<ServerResponse>,
+    action: Definitions.InteractiveActions.PayloadAction,
+    context: string
 ) => Promise<void>;
 
 class ActionManager {
@@ -32,38 +37,77 @@ class ActionManager {
         }
         return JSON.parse(context);
     }
+
     listenForSlackInteractions(callback: ActionCallback): void {
         this.callbacks.push(callback);
     }
 
-    route(): fastify.Plugin<Server, IncomingMessage, ServerResponse, never> {
-        return async (instance: fastify.FastifyInstance) =>
-            instance.post<
-                fastify.DefaultQuery,
-                fastify.DefaultParams,
-                fastify.DefaultHeaders,
-                { payload: string }
-            >("/slackInteractiveActions", async (request, reply) => {
-                for (let callback of this.callbacks) {
-                    try {
-                        await callback(
-                            <SlackInteractiveActionPayload>JSON.parse(request.body.payload),
-                            reply
-                        );
+    listenForCallbackIdOfType(actionType: string, callback: ActionCallback): void {
+        this.callbacks.push(async (payload, reply) => {
+            if (payload.callback_id == undefined) {
+                return;
+            }
 
-                        if (reply.sent) {
-                            logger.info("Handled callback for action", reply, request.body);
-                            break;
-                        }
-                    } catch (err) {
-                        logger.error("Failed to process callback for action", err, request.body);
-                    }
-                    if (!reply.sent) {
-                        logger.error("Failed to find a callback for interaction", request.body);
-                    }
-                    reply.code(200).send();
+            if (payload.callback_id.startsWith(actionType)) {
+                callback(payload, reply);
+            }
+        });
+    }
+
+    listenForBlockIdOfType(actionType: string, callback: ContextIdActionCallback): void {
+        this.callbacks.push(async (payload, reply) => {
+            if (payload.actions == undefined) {
+                return;
+            }
+
+            payload.actions.forEach(action => {
+                if (action.block_id.startsWith(actionType)) {
+                    callback(payload, reply, action, action.block_id);
                 }
             });
+        });
+    }
+
+    listenForActionIdOfType(actionType: string, callback: ContextIdActionCallback): void {
+        this.callbacks.push(async (payload, reply) => {
+            if (payload.actions == undefined) {
+                return;
+            }
+
+            payload.actions.forEach(action => {
+                if (action.action_id.startsWith(actionType)) {
+                    callback(payload, reply, action, action.action_id);
+                }
+            });
+        });
+    }
+
+    route(): fastify.Plugin<Server, IncomingMessage, ServerResponse, never> {
+        return async (instance: fastify.FastifyInstance) =>
+            instance.post<fastify.DefaultQuery, fastify.DefaultParams, fastify.DefaultHeaders, { payload: string }>(
+                "/slackInteractiveActions",
+                async (request, reply) => {
+                    for (let callback of this.callbacks) {
+                        try {
+                            await callback(
+                                <Definitions.InteractiveActions.Payload>JSON.parse(request.body.payload),
+                                reply
+                            );
+
+                            if (reply.sent) {
+                                logger.info("Handled callback for action", reply, request.body);
+                                break;
+                            }
+                        } catch (err) {
+                            logger.error("Failed to process callback for action", err, request.body);
+                        }
+                    }
+                    if (!reply.sent) {
+                        logger.error("Failed to find working callback for interaction", request.body);
+                        reply.code(500).send("Sorry an internal error occured.");
+                    }
+                }
+            );
     }
 }
 
