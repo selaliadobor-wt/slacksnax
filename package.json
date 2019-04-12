@@ -23,7 +23,7 @@
         "typescript": "^3.3.3333"
     },
     "dependencies": {
-        "@slack/client": "^4.10.0",
+        "@slack/client": "^5.0.0",
         "@types/ioredis": "^4.0.10",
         "@types/node": "^11.10.5",
         "@types/request-promise": "^4.1.42",
@@ -34,12 +34,13 @@
         "fastify-formbody": "^3.1.0",
         "http": "0.0.0",
         "ioredis": "^4.6.2",
-        "mongoose": "^5.4.17",
+        "mongoose": "^5.4.15",
         "reflect-metadata": "^0.1.13",
         "request": "^2.88.0",
         "request-promise": "^4.2.4",
         "semantics3-node": "0.0.3",
         "string-similarity": "^3.0.0",
+        "typed-slack-client": "^1.0.10",
         "typegoose": "^5.6.0",
         "uuid": "^3.3.2"
     }
