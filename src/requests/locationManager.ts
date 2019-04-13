@@ -68,7 +68,7 @@ class LocationMananger {
 
         if (locations == null || locations.length < 1) {
             return await new SlackResponseUrlReplier(responseUrl).unformattedText(
-                "Your team hasn't added any Snack locations 😱\nCheckout the `/addSnaxLocation` command"
+                "Your team hasn't added any Snack locations 😱\n_Checkout the `/addSnaxLocation` command_"
             );
         }
 
@@ -93,6 +93,17 @@ class LocationMananger {
             },
         });
     }
+
+    async renameLocation(teamId: string, locationId: string, newName: string) {
+        let location = await SnackRequestLocation.getModelForTeam(teamId).findOne({ id: locationId });
+        if (location == null) {
+            throw new Error("No matching location found to rename");
+        }
+
+        location.name = newName;
+        await location.save();
+    }
+
     async getLocationsForTeam(teamId: string): Promise<SnackRequestLocation[]> {
         return await SnackRequestLocation.getModelForTeam(teamId).find();
     }
