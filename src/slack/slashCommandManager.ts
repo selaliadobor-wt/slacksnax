@@ -1,7 +1,8 @@
 import * as fastify from "fastify";
-import { Server, IncomingMessage, ServerResponse } from "http";
-import * as rp from "request-promise";
+import { IncomingMessage } from "http";
 import { Definitions } from "typed-slack-client/slackTypes";
+import { SlackResponseUrlReplier } from "./slackUtils";
+
 type SlashCommandRequestType = fastify.FastifyRequest<
     IncomingMessage,
     fastify.DefaultQuery,
@@ -9,10 +10,8 @@ type SlashCommandRequestType = fastify.FastifyRequest<
     fastify.DefaultHeaders,
     Definitions.SlashCommands.RequestBody
 >;
-type SlashCommandReplyCallback = (
-    request: SlashCommandRequestType,
-    reply: (body: object) => Promise<void>
-) => Promise<void>;
+
+type SlashCommandReplyCallback = (request: SlashCommandRequestType, reply: SlackResponseUrlReplier) => Promise<void>;
 
 class SlashCommandManager {
     fastify: fastify.FastifyInstance | undefined;
@@ -35,22 +34,12 @@ class SlashCommandManager {
             throw new Error("No slash command defined for endpoint: " + commandEndpoint);
         }
 
-        let responseUrlReply = async (body: object) => {
-            await rp.post(request.body.response_url, {
-                json: true,
-                body: body,
-            });
-        };
+        let replier = new SlackResponseUrlReplier(request.body.response_url);
 
         try {
-            await callback(request, responseUrlReply);
+            await callback(request, replier);
         } catch (err) {
-            await responseUrlReply({
-                response_type: "ephemeral",
-                replace_original: true,
-                delete_original: true,
-                text: `Failed to proccess your request: ${err}`,
-            });
+            await replier.unformattedText(`Failed to proccess your request: ${err}`);
         }
     }
 

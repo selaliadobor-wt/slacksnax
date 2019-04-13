@@ -105,6 +105,6 @@ export function registerSlashCommands() {
 
         request.log.debug(response);
 
-        reply(response);
+        reply.rawJson(response);
     });
 }

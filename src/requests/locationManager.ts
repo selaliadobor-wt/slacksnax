@@ -1,14 +1,13 @@
 import { SnackRequestLocation } from "./snackRequestLocation";
 import { UserLocation } from "./userLocation";
 import { createTypedSlackWebClient } from "typed-slack-client/typedSlackWebClient";
-import { Team, TeamModel } from "../models/team";
+import { TeamModel } from "../models/team";
 import { ActionManagerInstance } from "../slack/actions/actionManager";
 import { SlashCommandManagerInstance } from "../slack/slashCommandManager";
 import { FastifyRequest, DefaultQuery, DefaultParams, DefaultHeaders } from "fastify";
 import { IncomingMessage } from "http";
 import { Definitions } from "typed-slack-client/slackTypes";
-import { Snack } from "../snackSearch/snack";
-import * as rp from "request-promise";
+import { SlackResponseUrlReplier } from "../slack/slackUtils";
 export enum SnackRequestResult {
     CreatedNew,
     RequestAddedForExisted,
@@ -46,15 +45,7 @@ class LocationMananger {
                     continuation.request
                 );
             } else {
-                rp.post(payload.response_url, {
-                    json: true,
-                    body: {
-                        response_type: "ephemeral",
-                        replace_original: true,
-                        delete_original: true,
-                        text: "Updated your location! 🎉",
-                    },
-                });
+                new SlackResponseUrlReplier(payload.response_url).unformattedText("Updated your location! 🎉");
             }
         });
     }
@@ -94,7 +85,6 @@ class LocationMananger {
                 ],
             },
         });
-        let location = await LocationManangerInstance.getRequestLocationForUser(userId, teamId);
     }
     async getLocationsForTeam(teamId: string): Promise<SnackRequestLocation[]> {
         return await SnackRequestLocation.getModelForTeam(teamId).find();

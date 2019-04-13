@@ -18,25 +18,17 @@ export function registerSlashCommands() {
 
     SlashCommandManagerInstance.registerSlashCommand(AddSnaxLocationSlashCommand, async (request, reply) => {
         if (request.body.text == null || request.body.text.length < 5) {
-            reply({
-                response_type: "ephemeral",
-                replace_original: true,
-                delete_original: true,
-                text: `Add a name to this request! 🙂 (For example "${AddSnaxLocationSlashCommand} Floor #3 Kitchen)"`,
-            });
+            reply.unformattedText(
+                `Add a name to this request! 🙂 (For example "${AddSnaxLocationSlashCommand} Floor #3 Kitchen)"`
+            );
         }
         let locationCreated = await LocationManangerInstance.addLocationForTeam(
             request.body.text,
             request.body.team_id
         );
 
-        await reply({
-            response_type: "ephemeral",
-            replace_original: true,
-            delete_original: true,
-            text: locationCreated
-                ? "Added a new location for snacks! 🎉"
-                : "A location with that name already exists 🙂",
-        });
+        await reply.unformattedText(
+            locationCreated ? "Added a new location for snacks! 🎉" : "A location with that name already exists 🙂"
+        );
     });
 }
