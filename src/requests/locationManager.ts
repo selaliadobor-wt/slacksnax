@@ -57,14 +57,21 @@ class LocationMananger {
         userId: string,
         teamId: string,
         triggerId: string,
-        continuation: UserLocationPromptContinuation
+        responseUrl: string,
+        continuation?: UserLocationPromptContinuation
     ) {
         let team = await TeamModel.findOne({ teamId: teamId });
         if (team == null) {
-            throw new Error("Failed to find team for");
+            throw new Error("Failed to find your team");
+        }
+        let locations = await this.getLocationsForTeam(teamId);
+
+        if (locations == null || locations.length < 1) {
+            return await new SlackResponseUrlReplier(responseUrl).unformattedText(
+                "Your team hasn't added any Snack locations 😱\nCheckout the `/addSnaxLocation` command"
+            );
         }
 
-        let locations = await this.getLocationsForTeam(teamId);
         let slack = createTypedSlackWebClient();
         await slack.dialog.open({
             token: team.accessToken,

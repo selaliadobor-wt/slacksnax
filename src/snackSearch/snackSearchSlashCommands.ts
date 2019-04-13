@@ -54,17 +54,22 @@ export function registerSlashCommands() {
             request.body.team_id
         );
         if (location == null) {
-            await LocationManangerInstance.promptForUserLocation(
-                "Set your location first!",
-                request.body.user_id,
-                request.body.team_id,
-                request.body.trigger_id,
-                {
-                    commandEndpoint: "/snacksearch",
-                    request: request,
-                }
-            );
-            await SlashCommandManagerInstance.invokeSlashCommandForRequest("/updateSnaxLocation", request);
+            try {
+                await LocationManangerInstance.promptForUserLocation(
+                    "Set your location first!",
+                    request.body.user_id,
+                    request.body.team_id,
+                    request.body.trigger_id,
+                    request.body.response_url,
+
+                    {
+                        commandEndpoint: "/snacksearch",
+                        request: request,
+                    }
+                );
+            } catch (err) {
+                reply.unformattedText(err);
+            }
             return;
         }
         let searchResults = await searchAllEngines(text);

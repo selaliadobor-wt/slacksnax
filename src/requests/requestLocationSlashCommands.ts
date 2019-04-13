@@ -6,20 +6,24 @@ export const UpdateSnaxLocationSlashCommand = "/updateSnaxLocation";
 export const AddSnaxLocationSlashCommand = "/addSnaxLocation";
 
 export function registerSlashCommands() {
-    SlashCommandManagerInstance.registerSlashCommand(UpdateSnaxLocationSlashCommand, async request => {
-        await LocationManangerInstance.promptForUserLocation(
-            "Set your location!",
-            request.body.user_id,
-            request.body.team_id,
-            request.body.trigger_id,
-            null
-        );
+    SlashCommandManagerInstance.registerSlashCommand(UpdateSnaxLocationSlashCommand, async (request, reply) => {
+        try {
+            await LocationManangerInstance.promptForUserLocation(
+                "Set your location!",
+                request.body.user_id,
+                request.body.team_id,
+                request.body.trigger_id,
+                request.body.response_url
+            );
+        } catch (err) {
+            reply.unformattedText((<Error>err).message);
+        }
     });
 
     SlashCommandManagerInstance.registerSlashCommand(AddSnaxLocationSlashCommand, async (request, reply) => {
         if (request.body.text == null || request.body.text.length < 5) {
-            reply.unformattedText(
-                `Add a name to this request! 🙂 (For example "${AddSnaxLocationSlashCommand} Floor #3 Kitchen)"`
+            return await reply.unformattedText(
+                `Add a name to this request! 🙂 (For example \`${AddSnaxLocationSlashCommand} Floor #3 Kitchen\`)`
             );
         }
         let locationCreated = await LocationManangerInstance.addLocationForTeam(
