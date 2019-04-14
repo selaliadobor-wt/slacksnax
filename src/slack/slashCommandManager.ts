@@ -1,6 +1,6 @@
 import * as fastify from "fastify";
 import { IncomingMessage } from "http";
-import { Definitions } from "typed-slack-client/slackTypes";
+import { Definitions } from "typed-slack-client";
 import { SlackResponseUrlReplier } from "./slackUtils";
 
 type SlashCommandRequestType = fastify.FastifyRequest<

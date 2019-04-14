@@ -1,7 +1,6 @@
 import { DefaultHeaders, DefaultParams, DefaultQuery, FastifyRequest } from "fastify";
 import { IncomingMessage } from "http";
-import { Definitions } from "typed-slack-client/slackTypes";
-import { createTypedSlackWebClient } from "typed-slack-client/typedSlackWebClient";
+import { createTypedSlackWebClient, Definitions } from "typed-slack-client";
 import { TeamModel } from "../models/team";
 import { ActionManagerInstance } from "../slack/actions/actionManager";
 import { SlackResponseUrlReplier } from "../slack/slackUtils";

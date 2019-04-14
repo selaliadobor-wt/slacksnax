@@ -2,7 +2,7 @@ import { WebAPICallResult, WebClient } from "@slack/client";
 import * as fastify from "fastify";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import Redis from "ioredis";
-import { Definitions } from "typed-slack-client/slackTypes";
+import { Definitions } from "typed-slack-client";
 import uuid from "uuid/v4";
 import { redis } from "../../redis";
 import { logger } from "../../server";

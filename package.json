@@ -43,7 +43,7 @@
         "semantics3-node": "0.0.3",
         "string-similarity": "^3.0.0",
         "tslint": "^5.15.0",
-        "typed-slack-client": "^1.0.10",
+        "typed-slack-client": "^1.0.14",
         "typegoose": "^5.6.0",
         "uuid": "^3.3.2"
     }
