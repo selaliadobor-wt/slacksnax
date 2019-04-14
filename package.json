@@ -4,13 +4,15 @@
     "description": "",
     "main": "dist/server.js",
     "scripts": {
+        "tslint-check": "tslint-config-prettier-check ./tslint.json",
         "build-ts": "tsc",
         "postinstall": "npm run build-ts",
         "start": "npm run serve",
         "serve": "node dist/server.js",
         "watch-node": "nodemon dist/server.js",
         "watch-ts": "tsc -w",
-        "lint": "tslint -c tslint.json 'src/**/*.ts'"
+        "lint": "tslint -c tslint.json 'src/**/*.ts'",
+        "prettier-all": "prettier --write 'src/**/*.ts'"
     },
     "author": "",
     "license": "ISC",
@@ -40,6 +42,7 @@
         "request-promise": "^4.2.4",
         "semantics3-node": "0.0.3",
         "string-similarity": "^3.0.0",
+        "tslint": "^5.15.0",
         "typed-slack-client": "^1.0.10",
         "typegoose": "^5.6.0",
         "uuid": "^3.3.2"

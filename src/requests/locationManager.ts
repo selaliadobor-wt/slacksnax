@@ -1,13 +1,13 @@
-import { SnackRequestLocation } from "./snackRequestLocation";
-import { UserLocation } from "./userLocation";
+import { DefaultHeaders, DefaultParams, DefaultQuery, FastifyRequest } from "fastify";
+import { IncomingMessage } from "http";
+import { Definitions } from "typed-slack-client/slackTypes";
 import { createTypedSlackWebClient } from "typed-slack-client/typedSlackWebClient";
 import { TeamModel } from "../models/team";
 import { ActionManagerInstance } from "../slack/actions/actionManager";
-import { SlashCommandManagerInstance } from "../slack/slashCommandManager";
-import { FastifyRequest, DefaultQuery, DefaultParams, DefaultHeaders } from "fastify";
-import { IncomingMessage } from "http";
-import { Definitions } from "typed-slack-client/slackTypes";
 import { SlackResponseUrlReplier } from "../slack/slackUtils";
+import { SlashCommandManagerInstance } from "../slack/slashCommandManager";
+import { SnackRequestLocation } from "./snackRequestLocation";
+import { UserLocation } from "./userLocation";
 export enum SnackRequestResult {
     CreatedNew,
     RequestAddedForExisted,
@@ -25,18 +25,19 @@ export type UserLocationPromptContinuation = {
     >;
 } | null;
 class LocationMananger {
+    private readonly locationPromptType = "location-prompt";
     constructor() {
         ActionManagerInstance.listenForCallbackIdOfType(this.locationPromptType, async (payload, reply) => {
             reply.code(200).send();
-            let locationId = (<any>payload)["submission"]["location"];
-            let location = await SnackRequestLocation.getModelForTeam(payload.team.id).findOne({ id: locationId });
+            const locationId = (payload as any).submission.location;
+            const location = await SnackRequestLocation.getModelForTeam(payload.team.id).findOne({ id: locationId });
             if (location == null) {
                 throw new Error("No matching location found for location: " + locationId);
             }
 
-            this.setRequestLocationForUser(payload.user.id, payload.team.id, location);
+            await this.setRequestLocationForUser(payload.user.id, payload.team.id, location);
 
-            let continuation = await ActionManagerInstance.getInteractionContext<UserLocationPromptContinuation>(
+            const continuation = await ActionManagerInstance.getInteractionContext<UserLocationPromptContinuation>(
                 payload.callback_id
             );
             if (continuation != null) {
@@ -45,14 +46,12 @@ class LocationMananger {
                     continuation.request
                 );
             } else {
-                new SlackResponseUrlReplier(payload.response_url).unformattedText("Updated your location! 🎉");
+                await new SlackResponseUrlReplier(payload.response_url).unformattedText("Updated your location! 🎉");
             }
         });
     }
 
-    private readonly locationPromptType = "location-prompt";
-
-    async promptForUserLocation(
+    public async promptForUserLocation(
         reason: string,
         userId: string,
         teamId: string,
@@ -60,19 +59,19 @@ class LocationMananger {
         responseUrl: string,
         continuation?: UserLocationPromptContinuation
     ) {
-        let team = await TeamModel.findOne({ teamId: teamId });
+        const team = await TeamModel.findOne({ teamId });
         if (team == null) {
             throw new Error("Failed to find your team");
         }
-        let locations = await this.getLocationsForTeam(teamId);
+        const locations = await this.getLocationsForTeam(teamId);
 
         if (locations == null || locations.length < 1) {
-            return await new SlackResponseUrlReplier(responseUrl).unformattedText(
+            return new SlackResponseUrlReplier(responseUrl).unformattedText(
                 "Your team hasn't added any Snack locations 😱\n_Checkout the `/addSnaxLocation` command_"
             );
         }
 
-        let slack = createTypedSlackWebClient();
+        const slack = createTypedSlackWebClient();
         await slack.dialog.open({
             token: team.accessToken,
             trigger_id: triggerId,
@@ -94,8 +93,8 @@ class LocationMananger {
         });
     }
 
-    async renameLocation(teamId: string, locationId: string, newName: string) {
-        let location = await SnackRequestLocation.getModelForTeam(teamId).findOne({ id: locationId });
+    public async renameLocation(teamId: string, locationId: string, newName: string) {
+        const location = await SnackRequestLocation.getModelForTeam(teamId).findOne({ id: locationId });
         if (location == null) {
             throw new Error("No matching location found to rename");
         }
@@ -104,12 +103,12 @@ class LocationMananger {
         await location.save();
     }
 
-    async getLocationsForTeam(teamId: string): Promise<SnackRequestLocation[]> {
-        return await SnackRequestLocation.getModelForTeam(teamId).find();
+    public async getLocationsForTeam(teamId: string): Promise<SnackRequestLocation[]> {
+        return SnackRequestLocation.getModelForTeam(teamId).find();
     }
 
-    async addLocationForTeam(locationName: string, teamId: string): Promise<boolean> {
-        let existingLocation = await SnackRequestLocation.getModelForTeam(teamId).findOne({ name: locationName });
+    public async addLocationForTeam(locationName: string, teamId: string): Promise<boolean> {
+        const existingLocation = await SnackRequestLocation.getModelForTeam(teamId).findOne({ name: locationName });
         if (existingLocation != null) {
             return false;
         } else {
@@ -119,28 +118,28 @@ class LocationMananger {
             return true;
         }
     }
-    async setRequestLocationForUser(userId: string, teamId: string, location: SnackRequestLocation) {
-        let existingLocation = await UserLocation.getModelForTeam(teamId).findOne({ userId: userId });
+    public async setRequestLocationForUser(userId: string, teamId: string, location: SnackRequestLocation) {
+        const existingLocation = await UserLocation.getModelForTeam(teamId).findOne({ userId });
         if (existingLocation) {
             existingLocation.locationId = location.id;
             await existingLocation.save();
         } else {
             await UserLocation.getModelForTeam(teamId).create(
                 UserLocation.create({
-                    userId: userId,
-                    location: location,
+                    userId,
+                    location,
                 })
             );
         }
     }
 
-    async getRequestLocationForUser(userId: string, teamId: string): Promise<SnackRequestLocation | null> {
-        let userLocation = await UserLocation.getModelForTeam(teamId).findOne({ userId: userId });
+    public async getRequestLocationForUser(userId: string, teamId: string): Promise<SnackRequestLocation | null> {
+        const userLocation = await UserLocation.getModelForTeam(teamId).findOne({ userId });
         if (userLocation == null) {
             return null;
         }
 
-        return await SnackRequestLocation.getModelForTeam(teamId).findOne({
+        return SnackRequestLocation.getModelForTeam(teamId).findOne({
             id: userLocation.locationId,
         });
     }

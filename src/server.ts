@@ -8,10 +8,10 @@ import { SlashCommandManagerInstance } from "./slack/slashCommandManager";
 require("dotenv").config();
 
 const monogoUri = process.env.MONGODB_URI;
-if (monogoUri == null) {
+if (monogoUri === null) {
     throw new Error("MONGODB_URI not set");
 }
-(<any>mongoose).Promise = global.Promise;
+(mongoose as any).Promise = global.Promise;
 
 const port = Number(process.env.PORT) || 1234;
 
@@ -43,7 +43,7 @@ const start = async () => {
 
         server.log.info(server.printRoutes());
 
-        let address = server.server.address();
+        const address = server.server.address();
 
         server.log.info(`Listening on ${JSON.stringify(address)}`);
     } catch (err) {

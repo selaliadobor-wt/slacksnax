@@ -1,14 +1,14 @@
-import { prop, Typegoose, ModelType, InstanceType } from "typegoose";
+import { InstanceType, ModelType, prop, Typegoose } from "typegoose";
 
 export class Team extends Typegoose {
     @prop({ required: true })
-    teamId: string;
+    public teamId: string;
     @prop({ required: true })
-    teamName: string;
+    public teamName: string;
     @prop({ required: true })
-    userId: string;
+    public userId: string;
     @prop({ required: true })
-    accessToken: string;
+    public accessToken: string;
     constructor({});
     constructor(args: { teamId: string; teamName: string; userId: string; accessToken: string }) {
         super();

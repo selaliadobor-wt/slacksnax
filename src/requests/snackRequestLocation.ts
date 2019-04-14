@@ -1,14 +1,9 @@
-import { prop, Typegoose, ModelType, InstanceType, staticMethod } from "typegoose";
+import { InstanceType, ModelType, prop, staticMethod, Typegoose } from "typegoose";
 import { v4 as uuid } from "uuid";
 
 export class SnackRequestLocation extends Typegoose {
-    @prop({ required: true })
-    id!: string;
-    @prop({ required: true })
-    name!: string;
-
-    static create(args: { name: string }) {
-        let field = new SnackRequestLocation();
+    public static create(args: { name: string }) {
+        const field = new SnackRequestLocation();
 
         field.name = args.name;
         field.id = uuid();
@@ -21,4 +16,8 @@ export class SnackRequestLocation extends Typegoose {
             schemaOptions: { timestamps: true, collection: `snack-request-locations-${teamId}` },
         });
     }
+    @prop({ required: true })
+    public id!: string;
+    @prop({ required: true })
+    public name!: string;
 }

@@ -1,10 +1,10 @@
 export interface Snack {
     friendlyName: string;
-    genericName: string | null;
-    tags: string[] | null;
-    brand: string | null;
-    description: string | null;
-    imageUrl: string | null;
-    upc: string | null;
-    productUrls: Map<string, string> | null;
+    genericName?: string;
+    tags?: string[];
+    brand?: string;
+    description?: string;
+    imageUrl?: string;
+    upc?: string;
+    productUrls?: Map<string, string>;
 }

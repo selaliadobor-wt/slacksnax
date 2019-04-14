@@ -9,12 +9,12 @@ const apiUserAgent =
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36";
 
 class SamsClubSearchEngine extends SnackSearchEngine {
-    engineName: String = "sams-club";
+    public engineName: String = "sams-club";
 
-    async uncachedSearch(queryText: string): Promise<Snack[]> {
+    public async uncachedSearch(queryText: string): Promise<Snack[]> {
         logger.info(`Searching Sam's Club for ${queryText} at ${searchEndpoint}`);
 
-        let response = await rp.get(searchEndpoint, {
+        const response = await rp.get(searchEndpoint, {
             headers: { "User-Agent": apiUserAgent },
             json: true,
             qs: {
@@ -29,7 +29,7 @@ class SamsClubSearchEngine extends SnackSearchEngine {
             },
         });
 
-        let products = <Array<any>>response["payload"]["records"];
+        const products = response.payload.records as any[];
 
         if (!products) {
             logger.debug(
@@ -40,25 +40,25 @@ class SamsClubSearchEngine extends SnackSearchEngine {
         }
 
         logger.debug(`Searching Sam's Club for ${queryText} at ${searchEndpoint} returned ${products.length} products`);
-        let snacks = await Promise.all(
-            products.map(async (product: any) => {
-                let productUrl = productEndpoint + product["productId"];
-                let response = await rp.get(productEndpoint + product["productId"], {
+        const snacks = await Promise.all(
+            products.map<Promise<Snack>>(async (product: any) => {
+                const productUrl = productEndpoint + product.productId;
+                const response = await rp.get(productEndpoint + product.productId, {
                     headers: { "User-Agent": apiUserAgent },
                     json: true,
                 });
-                let payload = response["payload"];
-                return <Snack>{
-                    friendlyName: payload["productName"].split("(")[0], //Remove sizing information from names
-                    brand: payload["brandName"] == null ? payload["productName"] : payload["brandName"].trim(),
-                    description: payload["longDescription"] || payload["shortDescription"],
+                const payload = response.payload;
+                return {
+                    friendlyName: payload.productName.split("(")[0], // Remove sizing information from names
+                    brand: payload.brandName === null ? payload.productName : payload.brandName.trim(),
+                    description: payload.longDescription || payload.shortDescription,
                     tags:
-                        payload["keywords"] == null
-                            ? [payload["productName"]]
-                            : payload["keywords"].split(",").map((tag: String) => tag.trim()),
-                    imageUrl: "https:" + payload["listImage"],
-                    upc: payload["skuOptions"][0]["upc"],
-                    productUrls: new Map([["samsClubId", payload["productId"]], ["samsClubApiUrl", productUrl]]),
+                        payload.keywords === null
+                            ? [payload.productName]
+                            : payload.keywords.split(",").map((tag: String) => tag.trim()),
+                    imageUrl: "https:" + payload.listImage,
+                    upc: payload.skuOptions[0].upc,
+                    productUrls: new Map([["samsClubId", payload.productId], ["samsClubApiUrl", productUrl]]),
                 };
             })
         );

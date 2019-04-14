@@ -1,5 +1,5 @@
 import fastify from "fastify";
-import { Server, IncomingMessage, ServerResponse } from "http";
+import { IncomingMessage, Server, ServerResponse } from "http";
 
 import Mongoose from "mongoose";
 
@@ -13,22 +13,21 @@ declare module "fastify" {
         db: Mongoose.Connection;
     }
 }
-type DetailedOptions = {
+interface DetailedOptions {
     uri: string;
     options: Mongoose.ConnectionOptions;
-};
+}
 
 type Options = DetailedOptions | String;
 
 // declare plugin type using fastify.Plugin
-const fastifyMongoose: fastify.Plugin<
-    Server,
-    IncomingMessage,
-    ServerResponse,
-    Options
-> = async function(instance, options, next) {
-    let uri = typeof options === "string" ? options : (<DetailedOptions>options).uri;
-    let mongoOptions = typeof options === "string" ? {} : (<DetailedOptions>options).options;
+const fastifyMongoose: fastify.Plugin<Server, IncomingMessage, ServerResponse, Options> = async function(
+    instance,
+    options,
+    next
+) {
+    const uri = typeof options === "string" ? options : (options as DetailedOptions).uri;
+    const mongoOptions = typeof options === "string" ? {} : (options as DetailedOptions).options;
 
     try {
         await Mongoose.connect(uri, mongoOptions);

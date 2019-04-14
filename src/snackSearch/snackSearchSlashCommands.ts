@@ -1,13 +1,13 @@
-import { flatten } from "../util";
-import { searchAllEngines } from "./searchEngineUtils";
+import { LocationManangerInstance } from "../requests/locationManager";
 import { SnackRequester } from "../requests/snackRequester";
 import { ActionManagerInstance } from "../slack/actions/actionManager";
-import { LocationManangerInstance } from "../requests/locationManager";
 import { SlashCommandManagerInstance } from "../slack/slashCommandManager";
+import { flatten } from "../util";
+import { searchAllEngines } from "./searchEngineUtils";
 import { Snack } from "./snack";
 const snackSearchRequestButtonInteractionId = "snack-search-request-button";
 
-function getSlackTextForSnack(snack: Snack, requestCallbackId: string): Array<any> {
+function getSlackTextForSnack(snack: Snack, requestCallbackId: string): any[] {
     return [
         {
             type: "section",
@@ -48,12 +48,12 @@ function getSlackTextForSnack(snack: Snack, requestCallbackId: string): Array<an
 
 export function registerSlashCommands() {
     SlashCommandManagerInstance.registerSlashCommand("/snacksearch", async (request, reply) => {
-        let text = request.body.text;
-        let location = await LocationManangerInstance.getRequestLocationForUser(
+        const text = request.body.text;
+        const location = await LocationManangerInstance.getRequestLocationForUser(
             request.body.user_id,
             request.body.team_id
         );
-        if (location == null) {
+        if (location === null) {
             try {
                 await LocationManangerInstance.promptForUserLocation(
                     "Set your location first!",
@@ -64,7 +64,7 @@ export function registerSlashCommands() {
 
                     {
                         commandEndpoint: "/snacksearch",
-                        request: request,
+                        request,
                     }
                 );
             } catch (err) {
@@ -74,25 +74,25 @@ export function registerSlashCommands() {
         }
         let searchResults = await searchAllEngines(text);
         if (!searchResults) {
-            searchResults = []; //TODO: Handle empty response
+            searchResults = []; // TODO: Handle empty response
         }
 
         searchResults = searchResults.slice(0, 10);
         request.log.debug(`Returning ${searchResults.length} products from product search for ${text}`);
-        let requester = SnackRequester.create({
+        const requester = SnackRequester.create({
             name: request.body.user_name,
             teamId: request.body.team_id,
             userId: request.body.user_id,
         });
 
-        let blockList = flatten(
+        const blockList = flatten(
             await Promise.all(
                 searchResults.map(async snack => {
-                    let callbackId = await ActionManagerInstance.setInteractionContext(
+                    const callbackId = await ActionManagerInstance.setInteractionContext(
                         snackSearchRequestButtonInteractionId,
                         {
-                            requester: requester,
-                            snack: snack,
+                            requester,
+                            snack,
                         }
                     );
                     return getSlackTextForSnack(snack, callbackId);
@@ -100,7 +100,7 @@ export function registerSlashCommands() {
             )
         );
 
-        let response = {
+        const response = {
             response_type: "ephemeral",
             replace_original: true,
             delete_original: true,

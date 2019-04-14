@@ -1,14 +1,9 @@
-import { Typegoose, prop, staticMethod, ModelType } from "typegoose";
+import { ModelType, prop, staticMethod, Typegoose } from "typegoose";
 import { SnackRequestLocation } from "./snackRequestLocation";
 
 export class UserLocation extends Typegoose {
-    @prop({ required: true })
-    locationId!: string;
-    @prop({ required: true })
-    userId!: string;
-
-    static create(args: { userId: string; location: SnackRequestLocation }) {
-        let field = new UserLocation();
+    public static create(args: { userId: string; location: SnackRequestLocation }) {
+        const field = new UserLocation();
 
         field.userId = args.userId;
         field.locationId = args.location.id;
@@ -16,9 +11,13 @@ export class UserLocation extends Typegoose {
     }
 
     @staticMethod
-    static getModelForTeam(teamId: string) {
+    public static getModelForTeam(teamId: string) {
         return new UserLocation().getModelForClass(UserLocation, {
             schemaOptions: { timestamps: true, collection: `user-locations-${teamId}` },
         });
     }
+    @prop({ required: true })
+    public locationId!: string;
+    @prop({ required: true })
+    public userId!: string;
 }

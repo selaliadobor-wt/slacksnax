@@ -1,8 +1,8 @@
 import Redis from "ioredis";
-var redis = new Redis(process.env.REDIS_URL);
+const redis = new Redis(process.env.REDIS_URL);
 
 import fastify from "fastify";
-import { Server, IncomingMessage, ServerResponse } from "http";
+import { IncomingMessage, Server, ServerResponse } from "http";
 
 declare module "fastify" {
     interface FastifyInstance {
@@ -11,12 +11,11 @@ declare module "fastify" {
 }
 
 // declare plugin type using fastify.Plugin
-const fastifyRedisPlugin: fastify.Plugin<
-    Server,
-    IncomingMessage,
-    ServerResponse,
-    never
-> = async function(instance, options, next) {
+const fastifyRedisPlugin: fastify.Plugin<Server, IncomingMessage, ServerResponse, never> = async function(
+    instance,
+    options,
+    next
+) {
     try {
         instance.decorate("redis", require("./redis")).addHook("onClose", function(fastify, done) {
             fastify.redis.quit(done);

@@ -1,15 +1,15 @@
-import { LocationManangerInstance } from "./locationManager";
 import { createTypedSlackWebClient } from "typed-slack-client/typedSlackWebClient";
-import { SlashCommandManagerInstance } from "../slack/slashCommandManager";
-import { ActionManagerInstance } from "../slack/actions/actionManager";
 import { TeamModel } from "../models/team";
+import { ActionManagerInstance } from "../slack/actions/actionManager";
 import { SlackResponseUrlReplier } from "../slack/slackUtils";
+import { SlashCommandManagerInstance } from "../slack/slashCommandManager";
+import { LocationManangerInstance } from "./locationManager";
 
 export const RenameSnaxLocationSlashCommand = "/renameSnaxLocation";
 export const UpdateSnaxLocationSlashCommand = "/updateSnaxLocation";
 export const AddSnaxLocationSlashCommand = "/addSnaxLocation";
 
-let slack = createTypedSlackWebClient();
+const slack = createTypedSlackWebClient();
 
 export function registerSlashCommands() {
     SlashCommandManagerInstance.registerSlashCommand(UpdateSnaxLocationSlashCommand, async (request, reply) => {
@@ -24,26 +24,23 @@ export function registerSlashCommands() {
 
     const renameLocationPrompt = "rename-snack-location";
     SlashCommandManagerInstance.registerSlashCommand(RenameSnaxLocationSlashCommand, async (request, reply) => {
-        let team = await TeamModel.findOne({ teamId: request.body.team_id });
-        if (team == null) {
+        const team = await TeamModel.findOne({ teamId: request.body.team_id });
+        if (team === null) {
             throw new Error("Team not found on server.");
         }
-        let locations = await LocationManangerInstance.getLocationsForTeam(team.teamId);
+        const locations = await LocationManangerInstance.getLocationsForTeam(team.teamId);
         await slack.dialog.open({
-            token: team.accessToken,
-            trigger_id: request.body.trigger_id,
             dialog: {
-                title: "Rename a Snax location",
                 callback_id: renameLocationPrompt,
                 elements: [
                     {
-                        type: "select",
                         name: "location",
+                        type: "select",
+                        label: "Select a location to rename",
                         options: locations.map(location => ({
                             label: location.name,
                             value: location.id,
                         })),
-                        label: "Select a location to rename",
                     },
                     {
                         type: "text",
@@ -51,25 +48,28 @@ export function registerSlashCommands() {
                         label: "The new name",
                     },
                 ],
+                title: "Rename a Snax location",
             },
+            token: team.accessToken,
+            trigger_id: request.body.trigger_id,
         });
     });
 
     ActionManagerInstance.listenForCallbackIdOfType(renameLocationPrompt, async (payload, reply) => {
         await reply.code(200).send();
-        let locationId = (<any>payload)["submission"]["location"];
-        let name = (<any>payload)["submission"]["name"];
+        const locationId = (payload as any).submission.location;
+        const name = (payload as any).submission.name;
         await LocationManangerInstance.renameLocation(payload.team.id, locationId, name);
-        new SlackResponseUrlReplier(payload.response_url).unformattedText("🎉 Renamed your Snax location!");
+        await new SlackResponseUrlReplier(payload.response_url).unformattedText("🎉 Renamed your Snax location!");
     });
 
     SlashCommandManagerInstance.registerSlashCommand(AddSnaxLocationSlashCommand, async (request, reply) => {
-        if (request.body.text == null || request.body.text.length < 5) {
-            return await reply.unformattedText(
+        if (request.body.text === null || request.body.text.length < 5) {
+            return reply.unformattedText(
                 `Add a name to this request! 🙂 (For example \`${AddSnaxLocationSlashCommand} Floor #3 Kitchen\`)`
             );
         }
-        let locationCreated = await LocationManangerInstance.addLocationForTeam(
+        const locationCreated = await LocationManangerInstance.addLocationForTeam(
             request.body.text,
             request.body.team_id
         );

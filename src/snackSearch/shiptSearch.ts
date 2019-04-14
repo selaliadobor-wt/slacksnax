@@ -8,19 +8,19 @@ const apiUserAgent =
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36";
 
 class ShiptSearchEngine extends SnackSearchEngine {
-    engineName: String = "shipt";
+    public engineName: string = "shipt";
 
-    async uncachedSearch(queryText: string): Promise<Snack[]> {
+    public async uncachedSearch(queryText: string): Promise<Snack[]> {
         logger.info(`Searching Shipt for ${queryText} at ${searchEndpoint}`);
 
-        let response = await rp.post(searchEndpoint, {
+        const response = await rp.post(searchEndpoint, {
             headers: { "User-Agent": apiUserAgent },
             json: true,
             qs: {
                 bucket_number: 13,
                 white_label_key: "shipt",
             },
-            //Maps to Harris Teeter nearest to Durham, NC
+            // Maps to Harris Teeter nearest to Durham, NC
             body: {
                 user_id: 2168807,
                 store_id: 6,
@@ -32,7 +32,7 @@ class ShiptSearchEngine extends SnackSearchEngine {
             },
         });
 
-        let products = <Array<any>>response["hits"];
+        const products = response.hits as any[];
 
         if (!products) {
             logger.debug(`Searching Shipt for ${queryText} at ${searchEndpoint} failed, invalid response`, response);
@@ -40,20 +40,20 @@ class ShiptSearchEngine extends SnackSearchEngine {
         }
 
         logger.debug(`Searching Shipt for ${queryText} at ${searchEndpoint} returned ${products.length} products`);
-        let snacks = await Promise.all(
-            products.map(async (product: any) => {
-                return <Snack>{
-                    friendlyName: product["display_name"] || product["name"],
-                    brand: product["brand_name"],
-                    description: product["description"],
-                    genericName: product["name"] || product["display_name"],
+        const snacks = await Promise.all(
+            products.map<Promise<Snack>>(async (product: any) => {
+                return {
+                    friendlyName: product.display_name || product.name,
+                    brand: product.brand_name,
+                    description: product.description,
+                    genericName: product.name || product.display_name,
                     tags: []
-                        .concat(product["keywords"])
-                        .concat(product["categories"].map((category: any) => category["name"]))
-                        .filter(tag => tag != null),
-                    imageUrl: product["image"]["url"],
-                    upc: product["upcs"][0],
-                    productUrls: new Map([["shiptId", product["product_id"]]]),
+                        .concat(product.keywords)
+                        .concat(product.categories.map((category: any) => category.name))
+                        .filter(tag => tag !== null),
+                    imageUrl: product.image.url,
+                    upc: product.upcs[0],
+                    productUrls: new Map([["shiptId", product.product_id]]),
                 };
             })
         );

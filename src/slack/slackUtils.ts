@@ -1,6 +1,6 @@
-import { WebClient, WebAPICallResult } from "@slack/client";
-import { initAsArray } from "typegoose/lib/utils";
+import { WebAPICallResult, WebClient } from "@slack/client";
 import * as rp from "request-promise";
+import { initAsArray } from "typegoose/lib/utils";
 
 const slack = new WebClient();
 
@@ -126,7 +126,7 @@ export interface SlackTeamProfileField {
     label: string;
     hint: string;
     type: string;
-    possible_values?: String[];
+    possible_values?: string[];
     options?: any;
     is_hidden: number;
 }
@@ -172,9 +172,9 @@ export interface CompleteSlackUser {
     profile: SlackUsersProfile;
 }
 async function getTeamCustomProfileFields(token: string): Promise<SlackTeamProfileField[]> {
-    let teamProfile = <SlackGetTeamProfileResponse>await slack.team.profile.get({
-        token: token,
-    });
+    const teamProfile = (await slack.team.profile.get({
+        token,
+    })) as SlackGetTeamProfileResponse;
 
     if (!teamProfile.ok) {
         throw new Error(`Failed to load profile for team.` + teamProfile.error);
@@ -183,44 +183,44 @@ async function getTeamCustomProfileFields(token: string): Promise<SlackTeamProfi
     return teamProfile.profile.fields;
 }
 async function getAllUsersFromTeam(token: string, includeBots: boolean = false): Promise<SlackUsersListMember[]> {
-    let initialList: SlackUsersListResponse = <SlackUsersListResponse>await slack.users.list({
-        token: token,
-    });
+    const initialList: SlackUsersListResponse = (await slack.users.list({
+        token,
+    })) as SlackUsersListResponse;
 
     if (!initialList.ok) {
         throw new Error("Failed to get list for team: " + initialList.error);
     }
     let users = initialList.members;
 
-    if (initialList.response_metadata != undefined && initialList.response_metadata.next_cursor != undefined) {
+    if (initialList.response_metadata !== undefined && initialList.response_metadata.next_cursor !== undefined) {
         let cursor: string | undefined = initialList.response_metadata.next_cursor;
-        //Because Slack returns an empty string instead of undefined...
-        while (cursor != undefined && cursor.trim().length > 0) {
-            let nextUserList = <SlackUsersListResponse>await slack.users.list({
-                token: token,
-                cursor: cursor,
-            });
-            let additionalUsers = nextUserList.members;
+        // Because Slack returns an empty string instead of undefined...
+        while (cursor !== undefined && cursor.trim().length > 0) {
+            const nextUserList = (await slack.users.list({
+                token,
+                cursor,
+            })) as SlackUsersListResponse;
+            const additionalUsers = nextUserList.members;
             if (!nextUserList.ok) {
                 throw new Error("Failed to get list for team: " + nextUserList.error);
             }
-            if (additionalUsers != undefined) {
+            if (additionalUsers !== undefined) {
                 users.concat(additionalUsers);
             }
-            let metadata = nextUserList.response_metadata;
-            cursor = metadata != undefined ? metadata.next_cursor : undefined;
+            const metadata = nextUserList.response_metadata;
+            cursor = metadata !== undefined ? metadata.next_cursor : undefined;
         }
     }
     users = users.filter(user => user.name.toLowerCase().includes("selali"));
-    return includeBots ? users : users.filter(user => !(user.is_bot || user.id == "USLACKBOT"));
+    return includeBots ? users : users.filter(user => !(user.is_bot || user.id === "USLACKBOT"));
 }
 
 async function getUserProfile(userId: string, token: string) {
-    let profileResponse = <SlackUsersProfileGetResponse>await slack.users.profile.get({
-        token: token,
+    const profileResponse = (await slack.users.profile.get({
+        token,
         user: userId,
         include_labels: false,
-    });
+    })) as SlackUsersProfileGetResponse;
     if (!profileResponse.ok) {
         throw new Error("Failed to get profile for user:" + profileResponse.error);
     }
@@ -228,25 +228,25 @@ async function getUserProfile(userId: string, token: string) {
 }
 
 class SlackResponseUrlReplier {
-    responseUrl: string;
+    public responseUrl: string;
 
     constructor(responseUrl: string) {
         this.responseUrl = responseUrl;
     }
-    async rawJson(body: object) {
+    public async rawJson(body: object) {
         await rp.post(this.responseUrl, {
             json: true,
-            body: body,
+            body,
         });
     }
-    async unformattedText(text: string, replaceOriginal?: boolean, deleteOriginal?: boolean) {
+    public async unformattedText(text: string, replaceOriginal?: boolean, deleteOriginal?: boolean) {
         await rp.post(this.responseUrl, {
             json: true,
             body: {
                 response_type: "ephemeral",
-                replace_original: replaceOriginal == undefined ? true : replaceOriginal,
-                delete_original: deleteOriginal == undefined ? true : deleteOriginal,
-                text: text,
+                replace_original: replaceOriginal === undefined ? true : replaceOriginal,
+                delete_original: deleteOriginal === undefined ? true : deleteOriginal,
+                text,
             },
         });
     }
