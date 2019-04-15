@@ -15,13 +15,7 @@ export enum SnackRequestResult {
 
 export type UserLocationPromptContinuation = {
     commandEndpoint: string;
-    request: FastifyRequest<
-        IncomingMessage,
-        DefaultQuery,
-        DefaultParams,
-        DefaultHeaders,
-        Definitions.SlashCommands.RequestBody
-    >;
+    request: Definitions.SlashCommands.RequestBody;
 } | null;
 class LocationMananger {
     private readonly locationPromptType = "location-prompt";

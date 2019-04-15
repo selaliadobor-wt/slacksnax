@@ -1,10 +1,12 @@
 import { LocationManangerInstance } from "../requests/locationManager";
 import { SnackRequester } from "../requests/snackRequester";
+import { logger } from "../server";
 import { ActionManagerInstance } from "../slack/actions/actionManager";
 import { SlashCommandManagerInstance } from "../slack/slashCommandManager";
 import { flatten } from "../util";
 import { searchAllEngines } from "./searchEngineUtils";
 import { Snack } from "./snack";
+
 const snackSearchRequestButtonInteractionId = "snack-search-request-button";
 
 function getSlackTextForSnack(snack: Snack, requestCallbackId: string): any[] {
@@ -48,19 +50,16 @@ function getSlackTextForSnack(snack: Snack, requestCallbackId: string): any[] {
 
 export function registerSlashCommands() {
     SlashCommandManagerInstance.registerSlashCommand("/snacksearch", async (request, reply) => {
-        const text = request.body.text;
-        const location = await LocationManangerInstance.getRequestLocationForUser(
-            request.body.user_id,
-            request.body.team_id
-        );
+        const text = request.text;
+        const location = await LocationManangerInstance.getRequestLocationForUser(request.user_id, request.team_id);
         if (location === null) {
             try {
                 await LocationManangerInstance.promptForUserLocation(
                     "Set your location first!",
-                    request.body.user_id,
-                    request.body.team_id,
-                    request.body.trigger_id,
-                    request.body.response_url,
+                    request.user_id,
+                    request.team_id,
+                    request.trigger_id,
+                    request.response_url,
 
                     {
                         commandEndpoint: "/snacksearch",
@@ -78,11 +77,11 @@ export function registerSlashCommands() {
         }
 
         searchResults = searchResults.slice(0, 10);
-        request.log.debug(`Returning ${searchResults.length} products from product search for ${text}`);
+        logger.debug(`Returning ${searchResults.length} products from product search for ${text}`);
         const requester = SnackRequester.create({
-            name: request.body.user_name,
-            teamId: request.body.team_id,
-            userId: request.body.user_id,
+            name: request.user_name,
+            teamId: request.team_id,
+            userId: request.user_id,
         });
 
         const blockList = flatten(
@@ -108,7 +107,7 @@ export function registerSlashCommands() {
             blocks: blockList,
         };
 
-        request.log.debug(response);
+        logger.debug(response);
 
         await reply.rawJson(response);
     });

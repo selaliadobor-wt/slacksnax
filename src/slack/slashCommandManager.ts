@@ -11,7 +11,10 @@ type SlashCommandRequestType = fastify.FastifyRequest<
     Definitions.SlashCommands.RequestBody
 >;
 
-type SlashCommandReplyCallback = (request: SlashCommandRequestType, reply: SlackResponseUrlReplier) => Promise<void>;
+type SlashCommandReplyCallback = (
+    request: Definitions.SlashCommands.RequestBody,
+    reply: SlackResponseUrlReplier
+) => Promise<void>;
 
 class SlashCommandManager {
     public fastify: fastify.FastifyInstance | undefined;
@@ -25,17 +28,17 @@ class SlashCommandManager {
         this.fastify.post(endpointName, async (request, reply) => {
             reply.send();
             await reply.code(200).send();
-            await this.invokeSlashCommandForRequest(endpointName, request);
+            await this.invokeSlashCommandForRequest(endpointName, request.body);
         });
     }
 
-    public async invokeSlashCommandForRequest(commandEndpoint: string, request: SlashCommandRequestType) {
+    public async invokeSlashCommandForRequest(commandEndpoint: string, request: Definitions.SlashCommands.RequestBody) {
         const callback = this.commands.get(commandEndpoint);
         if (callback === undefined) {
             throw new Error("No slash command defined for endpoint: " + commandEndpoint);
         }
 
-        const replier = new SlackResponseUrlReplier(request.body.response_url);
+        const replier = new SlackResponseUrlReplier(request.response_url);
 
         try {
             await callback(request, replier);
