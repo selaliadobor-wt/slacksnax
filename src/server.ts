@@ -5,10 +5,11 @@ import { fastifyRedisPlugin } from "./redis";
 import { ActionManagerInstance } from "./slack/actions/actionManager";
 import { SlashCommandManagerInstance } from "./slack/slashCommandManager";
 
-require("dotenv").config();
+import dotenv = require("dotenv");
+dotenv.config();
 
 const monogoUri = process.env.MONGODB_URI;
-if (monogoUri === null) {
+if (monogoUri === undefined) {
     throw new Error("MONGODB_URI not set");
 }
 (mongoose as any).Promise = global.Promise;
@@ -28,7 +29,9 @@ const start = async () => {
     (await import("./requests/requestLocationSlashCommands")).registerSlashCommands();
 
     server.register(require("fastify-formbody"));
-    server.register(fastifyMongoose, monogoUri);
+    server.register(fastifyMongoose, {
+        uri: monogoUri,
+    });
     server.register(fastifyRedisPlugin);
 
     server.register(ActionManagerInstance.routes());
@@ -52,7 +55,7 @@ const start = async () => {
     }
 };
 
-start();
+void start();
 
 const logger = server.log;
 export { logger };

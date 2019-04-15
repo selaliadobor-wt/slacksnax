@@ -68,7 +68,7 @@ export function registerSlashCommands() {
                     }
                 );
             } catch (err) {
-                reply.unformattedText(err);
+                await reply.unformattedText(err);
             }
             return;
         }
@@ -110,6 +110,6 @@ export function registerSlashCommands() {
 
         request.log.debug(response);
 
-        reply.rawJson(response);
+        await reply.rawJson(response);
     });
 }

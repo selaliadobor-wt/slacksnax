@@ -1,4 +1,4 @@
-import fastify from "fastify";
+import fastify, { RegisterOptions } from "fastify";
 import { IncomingMessage, Server, ServerResponse } from "http";
 
 import Mongoose from "mongoose";
@@ -13,26 +13,21 @@ declare module "fastify" {
         db: Mongoose.Connection;
     }
 }
-interface DetailedOptions {
+interface DetailedOptions extends RegisterOptions<Server, IncomingMessage, ServerResponse> {
     uri: string;
-    options: Mongoose.ConnectionOptions;
+    mongoOptions?: Mongoose.ConnectionOptions;
 }
 
-type Options = DetailedOptions | String;
-
 // declare plugin type using fastify.Plugin
-const fastifyMongoose: fastify.Plugin<Server, IncomingMessage, ServerResponse, Options> = async function(
+const fastifyMongoose: fastify.Plugin<Server, IncomingMessage, ServerResponse, DetailedOptions> = async (
     instance,
     options,
     next
-) {
-    const uri = typeof options === "string" ? options : (options as DetailedOptions).uri;
-    const mongoOptions = typeof options === "string" ? {} : (options as DetailedOptions).options;
-
+) => {
     try {
-        await Mongoose.connect(uri, mongoOptions);
-        instance.decorate("Mongoose", Mongoose).addHook("onClose", function(fastify, done) {
-            instance.Mongoose.connection.close(done);
+        await Mongoose.connect(options.uri, options.mongoOptions);
+        instance.decorate("Mongoose", Mongoose).addHook("onClose", async (_, done) => {
+            await instance.Mongoose.connection.close(done);
         });
 
         instance.decorate("db", Mongoose.connection);
@@ -43,4 +38,4 @@ const fastifyMongoose: fastify.Plugin<Server, IncomingMessage, ServerResponse, O
     }
 };
 
-export = fastifyMongoose;
+export default fastifyMongoose;

@@ -1,6 +1,5 @@
 import { WebAPICallResult, WebClient } from "@slack/client";
 import * as rp from "request-promise";
-import { initAsArray } from "typegoose/lib/utils";
 
 const slack = new WebClient();
 

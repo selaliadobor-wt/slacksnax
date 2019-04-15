@@ -4,7 +4,7 @@ import { logger } from "../server";
 import { Snack } from "./snack";
 
 abstract class SnackSearchEngine {
-    abstract get engineName(): String;
+    abstract get engineName(): string;
     public static sortByBestResult(queryText: string, snacks: Snack[]) {
         const comparedSnacks: Snack[][] = [];
 

@@ -9,7 +9,7 @@ const apiUserAgent =
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36";
 
 class SamsClubSearchEngine extends SnackSearchEngine {
-    public engineName: String = "sams-club";
+    public engineName: string = "sams-club";
 
     public async uncachedSearch(queryText: string): Promise<Snack[]> {
         logger.info(`Searching Sam's Club for ${queryText} at ${searchEndpoint}`);
@@ -43,11 +43,11 @@ class SamsClubSearchEngine extends SnackSearchEngine {
         const snacks = await Promise.all(
             products.map<Promise<Snack>>(async (product: any) => {
                 const productUrl = productEndpoint + product.productId;
-                const response = await rp.get(productEndpoint + product.productId, {
+                const searchResponse = await rp.get(productEndpoint + product.productId, {
                     headers: { "User-Agent": apiUserAgent },
                     json: true,
                 });
-                const payload = response.payload;
+                const payload = searchResponse.payload;
                 return {
                     friendlyName: payload.productName.split("(")[0], // Remove sizing information from names
                     brand: payload.brandName === null ? payload.productName : payload.brandName.trim(),
@@ -55,7 +55,7 @@ class SamsClubSearchEngine extends SnackSearchEngine {
                     tags:
                         payload.keywords === null
                             ? [payload.productName]
-                            : payload.keywords.split(",").map((tag: String) => tag.trim()),
+                            : payload.keywords.split(",").map((tag: string) => tag.trim()),
                     imageUrl: "https:" + payload.listImage,
                     upc: payload.skuOptions[0].upc,
                     productUrls: new Map([["samsClubId", payload.productId], ["samsClubApiUrl", productUrl]]),

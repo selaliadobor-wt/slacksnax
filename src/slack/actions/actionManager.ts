@@ -3,7 +3,7 @@ import * as fastify from "fastify";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import Redis from "ioredis";
 import { Definitions } from "typed-slack-client";
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { redis } from "../../redis";
 import { logger } from "../../server";
 type ActionCallback = (
@@ -20,7 +20,6 @@ type ContextIdActionCallback = (
 class ActionManager {
     public callbacks: ActionCallback[] = [];
     public contextCacheTtl = 60 * 5;
-    constructor() {}
 
     public async setInteractionContext<T>(interactionType: string, context: T): Promise<string> {
         const contextId = `${interactionType}:${uuid()}`;
@@ -48,7 +47,7 @@ class ActionManager {
             }
 
             if (payload.callback_id.startsWith(actionType)) {
-                callback(payload, reply);
+                await callback(payload, reply);
             }
         });
     }
@@ -59,11 +58,13 @@ class ActionManager {
                 return;
             }
 
-            payload.actions.forEach(action => {
-                if (action.block_id.startsWith(actionType)) {
-                    callback(payload, reply, action, action.block_id);
-                }
-            });
+            await Promise.all(
+                payload.actions.map(async action => {
+                    if (action.block_id.startsWith(actionType)) {
+                        await callback(payload, reply, action, action.block_id);
+                    }
+                })
+            );
         });
     }
 
@@ -73,11 +74,13 @@ class ActionManager {
                 return;
             }
 
-            payload.actions.forEach(action => {
-                if (action.action_id.startsWith(actionType)) {
-                    callback(payload, reply, action, action.action_id);
-                }
-            });
+            await Promise.all(
+                payload.actions.map(async action => {
+                    if (action.action_id.startsWith(actionType)) {
+                        await callback(payload, reply, action, action.action_id);
+                    }
+                })
+            );
         });
     }
 

@@ -26,10 +26,10 @@ async function updateOrCreateTeamToken(team: Team) {
     return isNewTeam;
 }
 
-export = async function(instance) {
+export = async (instance: fastify.FastifyInstance) => {
     instance.get<SlackOAuthRequestQuery, fastify.DefaultParams, fastify.DefaultHeaders, fastify.DefaultBody>(
         "/slackOauthCallback",
-        async function(request, reply) {
+        async (request, reply) => {
             const code = request.query.code;
 
             const oauthResult = (await web.oauth.access({
@@ -58,4 +58,4 @@ export = async function(instance) {
             });
         }
     );
-} as fastify.Plugin<Server, IncomingMessage, ServerResponse, never>;
+};

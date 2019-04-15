@@ -19,7 +19,6 @@ export interface SnackRequestResult {
 class RequestManager {
     public minRequestNameSimiliarity = 0.7;
     public minRequestDescriptionSimiliarity = 0.8;
-    constructor() {}
 
     public getSnackSimilarity(
         snackA: Snack,

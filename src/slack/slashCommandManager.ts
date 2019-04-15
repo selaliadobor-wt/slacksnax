@@ -44,8 +44,8 @@ class SlashCommandManager {
         }
     }
 
-    public setFastifyInstance(fastify: fastify.FastifyInstance) {
-        this.fastify = fastify;
+    public setFastifyInstance(instance: fastify.FastifyInstance) {
+        this.fastify = instance;
     }
 }
 
