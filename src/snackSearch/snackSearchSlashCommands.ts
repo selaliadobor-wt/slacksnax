@@ -68,7 +68,7 @@ export function registerSlashCommands() {
                     }
                 );
             } catch (err) {
-                await reply.unformattedText(err);
+                await reply.unformattedText(JSON.stringify(err));
             }
             return;
         }
