@@ -22,6 +22,9 @@ class ActionManager {
     public contextCacheTtl = 60 * 5;
 
     public async setInteractionContext<T>(interactionType: string, context: T): Promise<string> {
+        if (context === undefined) {
+            (context as any) = null; // JSON can not represent undefined
+        }
         const contextId = `${interactionType}:${uuid()}`;
         const redisKey = this.getRedisKeyForContext(contextId);
         await redis.set(redisKey, JSON.stringify(context), "ex", this.contextCacheTtl);
