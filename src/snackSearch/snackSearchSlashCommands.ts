@@ -164,6 +164,7 @@ export function registerSlashCommands() {
         async (payload, reply, action, context) => {
             reply.send();
             const slackReply = await new SlackResponseUrlReplier(payload.response_url);
+            await slackReply.unformattedText("Creating your request ⏳");
             const createContextId = (action as any).value;
             const createContext = await ActionManagerInstance.getInteractionContext<CreateRequestButtonContext>(
                 createContextId
