@@ -71,6 +71,9 @@ export function registerSlashCommands() {
             }
             return;
         }
+
+        await reply.unformattedText(`Searching for "${text}"⏳`);
+
         let searchResults = await searchAllEngines(text);
         if (!searchResults) {
             searchResults = []; // TODO: Handle empty response
