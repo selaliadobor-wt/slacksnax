@@ -13,7 +13,7 @@ export enum SnackRequestResultType {
 }
 
 export interface SnackRequestResult {
-    result: SnackRequestResultType;
+    type: SnackRequestResultType;
     request: SnackRequest;
 }
 class RequestManager {
@@ -87,7 +87,7 @@ class RequestManager {
 
             if (alreadyRequested) {
                 return {
-                    result: SnackRequestResultType.AlreadyRequestedByUser,
+                    type: SnackRequestResultType.AlreadyRequestedByUser,
                     request: existingRequest,
                 };
             } else {
@@ -95,7 +95,7 @@ class RequestManager {
                 await existingRequest.save();
 
                 return {
-                    result: SnackRequestResultType.AlreadyRequestedByUser,
+                    type: SnackRequestResultType.AlreadyRequestedByUser,
                     request: existingRequest,
                 };
             }
@@ -103,7 +103,7 @@ class RequestManager {
             logger.trace("Creating new snack request");
             await this.saveSnackRequest(snack, requester, location, requestString);
             return {
-                result: SnackRequestResultType.CreatedNew,
+                type: SnackRequestResultType.CreatedNew,
                 request: existingRequest,
             };
         }

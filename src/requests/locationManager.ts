@@ -7,11 +7,6 @@ import { SlackResponseUrlReplier } from "../slack/slackUtils";
 import { SlashCommandManagerInstance } from "../slack/slashCommandManager";
 import { SnackRequestLocation } from "./snackRequestLocation";
 import { UserLocation } from "./userLocation";
-export enum SnackRequestResult {
-    CreatedNew,
-    RequestAddedForExisted,
-    AlreadyRequestedByUser,
-}
 
 export type UserLocationPromptContinuation = {
     commandEndpoint: string;

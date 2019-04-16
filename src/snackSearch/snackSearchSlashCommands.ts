@@ -1,14 +1,57 @@
 import { LocationManangerInstance } from "../requests/locationManager";
+import { RequestManagerInstance, SnackRequestResultType } from "../requests/requestManager";
 import { SnackRequester } from "../requests/snackRequester";
 import { logger } from "../server";
 import { ActionManagerInstance } from "../slack/actions/actionManager";
+import { SlackResponseUrlReplier } from "../slack/slackUtils";
 import { SlashCommandManagerInstance } from "../slack/slashCommandManager";
 import { flatten } from "../util";
 import { searchAllEngines } from "./searchEngineUtils";
 import { Snack } from "./snack";
 
 const snackSearchRequestButtonInteractionId = "snack-search-request-button";
+const createRequestButtonAction = "createNewRequest";
 
+interface CreateRequestButtonContext {
+    requester: SnackRequester;
+    snack: Snack;
+    text: string;
+}
+const getSnackRequestFields = (snack: Snack, requester: SnackRequester, except: string[]) => {
+    let fields = [
+        {
+            title: "First Requested By",
+            value: requester.name,
+            short: true,
+        },
+    ];
+    if (snack.description !== undefined) {
+        fields.concat({
+            title: "Description",
+            value: snack.description.length < 20 ? snack.description : snack.description.slice(0, 20) + "…",
+            short: true,
+        });
+    }
+    // Remove undefined fields
+    fields = fields.filter(field => field.value);
+    return except ? fields.filter(field => !except.includes(field.title)) : fields;
+};
+
+function getSlackJsonForCreatedRequest(snack: Snack, requester: SnackRequester) {
+    return {
+        attachments: [
+            {
+                // prettier-ignore
+                pretext: `🎉 A request has been created for ${snack.friendlyName}! 🎉`,
+                image_url: snack.imageUrl,
+                fields: getSnackRequestFields(snack, requester, ["Number of Requests"]),
+            },
+        ],
+        response_type: "ephemeral",
+        replace_original: true,
+        delete_original: true,
+    };
+}
 function getSlackTextForSnack(snack: Snack, requestCallbackId: string): any[] {
     return [
         {
@@ -41,7 +84,7 @@ function getSlackTextForSnack(snack: Snack, requestCallbackId: string): any[] {
                         text: "Request This ✅",
                     },
                     value: requestCallbackId,
-                    action_id: "createNewRequest",
+                    action_id: createRequestButtonAction,
                 },
             ],
         },
@@ -90,11 +133,12 @@ export function registerSlashCommands() {
         const blockList = flatten(
             await Promise.all(
                 searchResults.map(async snack => {
-                    const callbackId = await ActionManagerInstance.setInteractionContext(
+                    const callbackId = await ActionManagerInstance.setInteractionContext<CreateRequestButtonContext>(
                         snackSearchRequestButtonInteractionId,
                         {
                             requester,
                             snack,
+                            text,
                         }
                     );
                     return getSlackTextForSnack(snack, callbackId);
@@ -114,4 +158,45 @@ export function registerSlashCommands() {
 
         await reply.rawJson(response);
     });
+
+    ActionManagerInstance.listenForActionIdOfType(
+        createRequestButtonAction,
+        async (payload, reply, action, context) => {
+            reply.send();
+            const slackReply = await new SlackResponseUrlReplier(payload.response_url);
+            const createContextId = (action as any).value;
+            const createContext = await ActionManagerInstance.getInteractionContext<CreateRequestButtonContext>(
+                createContextId
+            );
+
+            if (createContext == null) {
+                await slackReply.unformattedText("Your search has expired 🙁");
+                return;
+            }
+
+            const userLocation = await LocationManangerInstance.getRequestLocationForUser(
+                payload.user.id,
+                payload.team.id
+            );
+            if (userLocation == null) {
+                await slackReply.unformattedText(`You need to set your location with \`/updateSnaxLocation\` first 🙁`);
+                return;
+            }
+            const result = await RequestManagerInstance.requestSnack(
+                createContext.requester,
+                createContext.snack,
+                userLocation,
+                createContext.text
+            );
+            switch (result.type) {
+                case SnackRequestResultType.CreatedNew:
+                    await slackReply.rawJson(
+                        getSlackJsonForCreatedRequest(createContext.snack, createContext.requester)
+                    );
+                    break;
+                default:
+                    break;
+            }
+        }
+    );
 }
