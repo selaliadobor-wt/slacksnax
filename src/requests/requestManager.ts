@@ -8,13 +8,14 @@ import { SnackRequestLocation } from "./snackRequestLocation";
 
 export enum SnackRequestResultType {
     CreatedNew,
-    RequestAddedForExisted,
+    RequestAddedForExisting,
     AlreadyRequestedByUser,
+    SimilarExists,
 }
 
 export interface SnackRequestResult {
     type: SnackRequestResultType;
-    request: SnackRequest;
+    request: SnackRequest | null;
 }
 class RequestManager {
     public minRequestNameSimiliarity = 0.7;
@@ -47,7 +48,8 @@ class RequestManager {
         requester: SnackRequester,
         snack: Snack,
         location: SnackRequestLocation,
-        requestString: string
+        requestString: string,
+        forceNewIfSimilar = false
     ): Promise<SnackRequestResult> {
         let isExistingRequestSimilar = false;
         let isExistingExactlySame = false;
@@ -81,6 +83,13 @@ class RequestManager {
         if ((isExistingExactlySame || isExistingRequestSimilar) && existingRequest) {
             logger.trace("Found existing snack request for request: " + JSON.stringify(existingRequest));
 
+            if (!isExistingExactlySame && !forceNewIfSimilar) {
+                return {
+                    type: SnackRequestResultType.SimilarExists,
+                    request: existingRequest,
+                };
+            }
+
             const alreadyRequested = existingRequest.requesters.some(
                 existingRequester => existingRequester.userId === requester.userId
             );
@@ -95,7 +104,7 @@ class RequestManager {
                 await existingRequest.save();
 
                 return {
-                    type: SnackRequestResultType.AlreadyRequestedByUser,
+                    type: SnackRequestResultType.RequestAddedForExisting,
                     request: existingRequest,
                 };
             }
@@ -111,7 +120,7 @@ class RequestManager {
 
     private async findSnackRequestByText(teamId: string, location: SnackRequestLocation, text: string) {
         const results = await SnackRequest.getModelForTeam(teamId)
-            .find({ $text: { $search: text }, "snack.location.id": location.id }, { score: { $meta: "textScore" } }, {})
+            .find({ $text: { $search: text }, "location.id": location.id }, { score: { $meta: "textScore" } }, {})
             .sort({ score: { $meta: "textScore" } })
             .limit(1);
 
@@ -119,14 +128,10 @@ class RequestManager {
     }
 
     private async findSnackRequestByUpc(teamId: string, location: SnackRequestLocation, upc: string) {
-        const results = await SnackRequest.getModelForTeam(teamId)
-            .find({
-                "snack.upc": upc,
-                "snack.location.id": location.id,
-            })
-            .limit(1);
-
-        return results[0];
+        return SnackRequest.getModelForTeam(teamId).findOne({
+            "snack.upc": upc,
+            "location.id": location.id,
+        });
     }
 
     private async saveSnackRequest(
