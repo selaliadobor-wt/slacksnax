@@ -52,6 +52,22 @@ function getSlackJsonForCreatedRequest(snack: Snack, requester: SnackRequester) 
         delete_original: true,
     };
 }
+
+function getSlackJsonForAlreadyRequestedRequest(snack: Snack, requester: SnackRequester) {
+    return {
+        attachments: [
+            {
+                // prettier-ignore
+                pretext: `😒 You've already requested ${snack.name} 😒`,
+                image_url: snack.imageUrl,
+                fields: getSnackRequestFields(snack, requester, []),
+            },
+        ],
+        response_type: "ephemeral",
+        replace_original: true,
+        delete_original: true,
+    };
+}
 function getSlackTextForSnack(snack: Snack, requestCallbackId: string): any[] {
     return [
         {
@@ -195,6 +211,10 @@ export function registerSlashCommands() {
                         getSlackJsonForCreatedRequest(createContext.snack, createContext.requester)
                     );
                     break;
+                case SnackRequestResultType.AlreadyRequestedByUser:
+                    await slackReply.rawJson(
+                        getSlackJsonForAlreadyRequestedRequest(createContext.snack, createContext.requester)
+                    );
                 default:
                     break;
             }
