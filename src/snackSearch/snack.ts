@@ -1,5 +1,5 @@
 export interface Snack {
-    friendlyName: string;
+    name: string;
     genericName?: string;
     tags?: string[];
     brand?: string;

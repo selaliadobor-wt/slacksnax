@@ -3,10 +3,10 @@ import { Snack } from "../snackSearch/snack";
 import { SnackRequester } from "./snackRequester";
 import { SnackRequestLocation } from "./snackRequestLocation";
 
-@index({ originalRequestString: "text", "snack.friendlyName": "text" }, {
+@index({ originalRequestString: "text", "snack.name": "text" }, {
     weights: {
         originalRequestString: 5,
-        "snack.friendlyName": 10,
+        "snack.name": 10,
     },
 } as any)
 export class SnackRequest extends Typegoose {

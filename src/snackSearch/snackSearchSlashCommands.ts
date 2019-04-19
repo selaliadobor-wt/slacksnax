@@ -42,7 +42,7 @@ function getSlackJsonForCreatedRequest(snack: Snack, requester: SnackRequester) 
         attachments: [
             {
                 // prettier-ignore
-                pretext: `🎉 A request has been created for ${snack.friendlyName}! 🎉`,
+                pretext: `🎉 A request has been created for ${snack.name}! 🎉`,
                 image_url: snack.imageUrl,
                 fields: getSnackRequestFields(snack, requester, ["Number of Requests"]),
             },
@@ -58,7 +58,7 @@ function getSlackTextForSnack(snack: Snack, requestCallbackId: string): any[] {
             type: "section",
             text: {
                 type: "mrkdwn",
-                text: `*${snack.friendlyName}*`,
+                text: `*${snack.name}*`,
             },
         },
         {

@@ -11,18 +11,16 @@ abstract class SnackSearchEngine {
         return snacks
             .sort(
                 (snackA, snackB) =>
-                    compareTwoStrings(snackB.friendlyName, queryText) -
-                    compareTwoStrings(snackA.friendlyName, queryText)
+                    compareTwoStrings(snackB.name, queryText) - compareTwoStrings(snackA.name, queryText)
             )
             .reverse()
             .filter(snackA => {
                 return !snacks.some(snackB => {
-                    if (snackA.friendlyName === snackB.friendlyName) {
+                    if (snackA.name === snackB.name) {
                         return false;
                     }
                     const areSimilar =
-                        compareTwoStrings(snackA.friendlyName, snackB.friendlyName) >
-                        SnackSearchEngine.maxSnackSimilarity;
+                        compareTwoStrings(snackA.name, snackB.name) > SnackSearchEngine.maxSnackSimilarity;
                     const alreadyCompared = comparedSnacks.some(
                         comparison => comparison.includes(snackA) && comparison.includes(snackB)
                     );

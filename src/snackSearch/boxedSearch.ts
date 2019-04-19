@@ -32,7 +32,7 @@ class BoxedSearch extends SnackSearchEngine {
         return products.map(
             (product: any): Snack => {
                 return {
-                    friendlyName: product.name,
+                    name: product.name,
                     brand: product.variantObject.product.brand,
                     description:
                         product.variantObject.product.longDescription || product.variantObject.product.shortDescription,

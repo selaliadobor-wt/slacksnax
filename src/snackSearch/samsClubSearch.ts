@@ -49,7 +49,7 @@ class SamsClubSearchEngine extends SnackSearchEngine {
                 });
                 const payload = searchResponse.payload;
                 return {
-                    friendlyName: payload.productName.split("(")[0], // Remove sizing information from names
+                    name: payload.productName.split("(")[0], // Remove sizing information from names
                     brand: payload.brandName === null ? payload.productName : payload.brandName.trim(),
                     description: payload.longDescription || payload.shortDescription,
                     tags:

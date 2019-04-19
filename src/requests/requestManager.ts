@@ -34,7 +34,7 @@ class RequestManager {
                 similarity: 1,
             };
         }
-        const name = StringSimiliarity.compareTwoStrings(snackA.friendlyName || "", snackB.friendlyName || "");
+        const name = StringSimiliarity.compareTwoStrings(snackA.name || "", snackB.name || "");
 
         const similarity = StringSimiliarity.compareTwoStrings(snackA.description || "", snackB.description || "");
 

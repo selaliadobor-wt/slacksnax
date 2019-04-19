@@ -43,7 +43,7 @@ class ShiptSearchEngine extends SnackSearchEngine {
         const snacks = await Promise.all(
             products.map<Promise<Snack>>(async (product: any) => {
                 return {
-                    friendlyName: product.display_name || product.name,
+                    name: product.display_name || product.name,
                     brand: product.brand_name,
                     description: product.description,
                     genericName: product.name || product.display_name,
