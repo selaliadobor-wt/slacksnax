@@ -6,5 +6,5 @@ export interface Snack {
     description?: string;
     imageUrl?: string;
     upc?: string;
-    productUrls?: Map<string, string>;
+    productUrls?: { [source: string]: string };
 }

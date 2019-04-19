@@ -53,7 +53,7 @@ class ShiptSearchEngine extends SnackSearchEngine {
                         .filter(tag => tag !== null),
                     imageUrl: product.image.url,
                     upc: product.upcs[0],
-                    productUrls: new Map([["shiptId", product.product_id]]),
+                    productUrls: { shiptId: product.product_id },
                 };
             })
         );

@@ -39,7 +39,7 @@ class BoxedSearch extends SnackSearchEngine {
                     tags: product.variantObject.product.keywords,
                     imageUrl: product.images[0].originalBase,
                     upc: product.variantObject.upc,
-                    productUrls: new Map([["boxedId", product.variantObject.gid]]),
+                    productUrls: { boxedId: product.variantObject.gid },
                 };
             }
         );

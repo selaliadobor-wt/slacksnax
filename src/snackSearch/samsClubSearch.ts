@@ -58,7 +58,7 @@ class SamsClubSearchEngine extends SnackSearchEngine {
                             : payload.keywords.split(",").map((tag: string) => tag.trim()),
                     imageUrl: "https:" + payload.listImage,
                     upc: payload.skuOptions[0].upc,
-                    productUrls: new Map([["samsClubId", payload.productId], ["samsClubApiUrl", productUrl]]),
+                    productUrls: { samsClubId: payload.productId, samsClubApiUrl: productUrl },
                 };
             })
         );

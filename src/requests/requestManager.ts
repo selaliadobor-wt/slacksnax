@@ -71,8 +71,8 @@ class RequestManager {
                 similarity.similarity > this.minRequestDescriptionSimiliarity;
 
             if (existingRequest.snack.productUrls !== undefined && snack.productUrls !== undefined) {
-                for (const [key, value] of existingRequest.snack.productUrls.entries()) {
-                    if (snack.productUrls!.get(key) === value) {
+                for (const [key, value] of Object.entries(snack.productUrls)) {
+                    if (existingRequest.snack.productUrls![key] === value) {
                         isExistingExactlySame = true;
                         break;
                     }
