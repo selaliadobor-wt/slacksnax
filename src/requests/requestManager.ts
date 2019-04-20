@@ -20,8 +20,10 @@ export interface SnackRequestResult {
     request?: SnackRequest;
 }
 class RequestManager {
-    public minRequestNameSimiliarity: number = 0.7;
-    public minRequestDescriptionSimiliarity: number = 0.8;
+    public minRequestNameSimiliarity: number = 0.65;
+    public minRequestDescriptionSimiliarity: number = 0.2;
+    // If two products are from the same brand, their similiarity is multiplied by this ammount
+    public sameBrandSimilarityMultiplier: number = 1.25;
 
     public getSnackSimilarity(
         snackA: Snack,
@@ -36,10 +38,17 @@ class RequestManager {
                 similarity: 1,
             };
         }
-        const name = StringSimiliarity.compareTwoStrings(snackA.name || "", snackB.name || "");
+        let name = StringSimiliarity.compareTwoStrings(snackA.name || "", snackB.name || "");
 
-        const similarity = StringSimiliarity.compareTwoStrings(snackA.description || "", snackB.description || "");
+        let similarity = StringSimiliarity.compareTwoStrings(snackA.description || "", snackB.description || "");
 
+        if (snackA.brand !== undefined && snackB.brand !== undefined) {
+            const sameBrand = snackA.brand.trim().toLocaleUpperCase() === snackB.brand.trim().toLocaleUpperCase();
+            if (sameBrand) {
+                name *= this.sameBrandSimilarityMultiplier;
+                similarity *= this.sameBrandSimilarityMultiplier;
+            }
+        }
         return {
             name,
             similarity,
