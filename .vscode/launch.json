@@ -13,7 +13,8 @@
             "protocol": "inspector",
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/app",
-            "preLaunchTask": "tsc"
+            "preLaunchTask": "tsc: build - tsconfig.json",
+            "outFiles": ["${workspaceFolder}/dist/**/*.js"]
         }
     ]
 }
