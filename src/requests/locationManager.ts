@@ -8,10 +8,10 @@ import { SlashCommandManagerInstance } from "../slack/slashCommandManager";
 import { SnackRequestLocation } from "./snackRequestLocation";
 import { UserLocation } from "./userLocation";
 
-export type UserLocationPromptContinuation = {
+export interface UserLocationPromptContinuation {
     commandEndpoint: string;
     request: Definitions.SlashCommands.RequestBody;
-} | null;
+}
 class LocationMananger {
     private readonly locationPromptType = "location-prompt";
     constructor() {
@@ -19,7 +19,7 @@ class LocationMananger {
             reply.code(200).send();
             const locationId = (payload as any).submission.location;
             const location = await SnackRequestLocation.getModelForTeam(payload.team.id).findOne({ id: locationId });
-            if (location == null) {
+            if (location === null) {
                 throw new Error("No matching location found for location: " + locationId);
             }
 
@@ -28,7 +28,7 @@ class LocationMananger {
             const continuation = await ActionManagerInstance.getInteractionContext<UserLocationPromptContinuation>(
                 payload.callback_id
             );
-            if (continuation != null) {
+            if (continuation !== undefined) {
                 await SlashCommandManagerInstance.invokeSlashCommandForRequest(
                     continuation.commandEndpoint,
                     continuation.request
@@ -48,12 +48,12 @@ class LocationMananger {
         continuation?: UserLocationPromptContinuation
     ) {
         const team = await TeamModel.findOne({ teamId });
-        if (team == null) {
+        if (team === null) {
             throw new Error("Failed to find your team");
         }
         const locations = await this.getLocationsForTeam(teamId);
 
-        if (locations == null || locations.length < 1) {
+        if (locations === null || locations.length < 1) {
             return new SlackResponseUrlReplier(responseUrl).unformattedText(
                 "Your team hasn't added any Snack locations 😱\n_Checkout the `/addSnaxLocation` command_"
             );
@@ -83,7 +83,7 @@ class LocationMananger {
 
     public async renameLocation(teamId: string, locationId: string, newName: string) {
         const location = await SnackRequestLocation.getModelForTeam(teamId).findOne({ id: locationId });
-        if (location == null) {
+        if (location === null) {
             throw new Error("No matching location found to rename");
         }
 
@@ -97,7 +97,7 @@ class LocationMananger {
 
     public async addLocationForTeam(locationName: string, teamId: string): Promise<boolean> {
         const existingLocation = await SnackRequestLocation.getModelForTeam(teamId).findOne({ name: locationName });
-        if (existingLocation != null) {
+        if (existingLocation !== null) {
             return false;
         } else {
             await SnackRequestLocation.getModelForTeam(teamId).create(
@@ -121,15 +121,17 @@ class LocationMananger {
         }
     }
 
-    public async getRequestLocationForUser(userId: string, teamId: string): Promise<SnackRequestLocation | null> {
+    public async getRequestLocationForUser(userId: string, teamId: string): Promise<SnackRequestLocation | undefined> {
         const userLocation = await UserLocation.getModelForTeam(teamId).findOne({ userId });
-        if (userLocation == null) {
-            return null;
+        if (userLocation === null) {
+            return undefined;
         }
 
-        return SnackRequestLocation.getModelForTeam(teamId).findOne({
+        const location = await SnackRequestLocation.getModelForTeam(teamId).findOne({
             id: userLocation.locationId,
         });
+
+        return location !== null ? location : undefined;
     }
 }
 

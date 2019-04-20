@@ -23,6 +23,7 @@ class ActionManager {
 
     public async setInteractionContext<T>(interactionType: string, context: T): Promise<string> {
         if (context === undefined) {
+            // tslint:disable-next-line:no-null-keyword
             (context as any) = null; // JSON can not represent undefined
         }
         const contextId = `${interactionType}:${uuid()}`;
@@ -31,10 +32,10 @@ class ActionManager {
         return contextId;
     }
 
-    public async getInteractionContext<T>(contextId: string): Promise<T | null> {
+    public async getInteractionContext<T>(contextId: string): Promise<T | undefined> {
         const context = await redis.get(this.getRedisKeyForContext(contextId));
         if (context === null) {
-            return null;
+            return undefined;
         }
         return JSON.parse(context);
     }

@@ -6,7 +6,8 @@
         "no-console": false,
         "prettier": true,
         "no-floating-promises": true,
-        "object-literal-sort-keys": false
+        "object-literal-sort-keys": false,
+        "no-null-keyword": true
     },
     "rulesDirectory": ["tslint-plugin-prettier"],
     "extends": ["tslint:latest", "tslint-config-prettier"]

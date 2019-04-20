@@ -186,7 +186,7 @@ export function registerSlashCommands() {
                 createContextId
             );
 
-            if (createContext == null) {
+            if (createContext === undefined) {
                 await slackReply.unformattedText("Your search has expired 🙁");
                 return;
             }
@@ -195,7 +195,7 @@ export function registerSlashCommands() {
                 payload.user.id,
                 payload.team.id
             );
-            if (userLocation == null) {
+            if (userLocation === undefined) {
                 await slackReply.unformattedText(`You need to set your location with \`/updateSnaxLocation\` first 🙁`);
                 return;
             }
