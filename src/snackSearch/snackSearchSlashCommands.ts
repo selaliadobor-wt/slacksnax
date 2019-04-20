@@ -215,6 +215,13 @@ export function registerSlashCommands() {
                     await slackReply.rawJson(
                         getSlackJsonForAlreadyRequestedRequest(createContext.snack, createContext.requester)
                     );
+                    break;
+                case SnackRequestResultType.SimilarExists:
+                    await slackReply.unformattedText("Similar Request Exists");
+                    break;
+                case SnackRequestResultType.RequestAddedForExisting:
+                    await slackReply.unformattedText("Request Added For Existing");
+                    break;
                 default:
                     break;
             }

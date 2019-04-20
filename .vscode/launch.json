@@ -12,7 +12,8 @@
             "port": 9229,
             "protocol": "inspector",
             "localRoot": "${workspaceFolder}",
-            "remoteRoot": "/app"
+            "remoteRoot": "/app",
+            "preLaunchTask": "tsc"
         }
     ]
 }

@@ -12,6 +12,7 @@ export interface UserLocationPromptContinuation {
     commandEndpoint: string;
     request: Definitions.SlashCommands.RequestBody;
 }
+
 class LocationMananger {
     private readonly locationPromptType = "location-prompt";
     constructor() {
