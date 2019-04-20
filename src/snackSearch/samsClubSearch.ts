@@ -50,12 +50,12 @@ class SamsClubSearchEngine extends SnackSearchEngine {
                 const payload = searchResponse.payload;
                 return {
                     name: payload.productName.split("(")[0], // Remove sizing information from names
-                    brand: payload.brandName === null ? payload.productName : payload.brandName.trim(),
+                    brand: payload.brandName === undefined ? payload.productName : payload.brandName.trim(),
                     description: payload.longDescription || payload.shortDescription,
                     tags:
-                        payload.keywords === null
+                        payload.keywords === undefined
                             ? [payload.productName]
-                            : payload.keywords.split(",").map((tag: string) => tag.trim()),
+                            : payload.keywords.split(",").map((tag: string) => (tag !== undefined ? tag.trim() : "")),
                     imageUrl: "https:" + payload.listImage,
                     upc: payload.skuOptions[0].upc,
                     productUrls: { samsClubId: payload.productId, samsClubApiUrl: productUrl },
