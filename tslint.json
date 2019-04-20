@@ -8,7 +8,8 @@
         "no-floating-promises": true,
         "object-literal-sort-keys": false,
         "no-null-keyword": true,
-        "no-switch-case-fall-through": true
+        "no-switch-case-fall-through": true,
+        "typedef": [true, "call-signature", "parameter", "member-variable-declaration"]
     },
     "rulesDirectory": ["tslint-plugin-prettier"],
     "extends": ["tslint:latest", "tslint-config-prettier"]

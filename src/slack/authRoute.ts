@@ -15,7 +15,7 @@ interface SlackOAuthRequestQuery {
     code: string;
 }
 
-async function updateOrCreateTeamToken(team: Team) {
+async function updateOrCreateTeamToken(team: Team): Promise<boolean> {
     const matchingTeam = await TeamModel.findOne({ teamId: team.teamId });
 
     const isNewTeam = matchingTeam === null;

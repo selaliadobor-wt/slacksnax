@@ -5,7 +5,7 @@ import { Snack } from "./snack";
 
 abstract class SnackSearchEngine {
     abstract get engineName(): string;
-    public static sortByBestResult(queryText: string, snacks: Snack[]) {
+    public static sortByBestResult(queryText: string, snacks: Snack[]): Snack[] {
         const comparedSnacks: Snack[][] = [];
 
         return snacks
@@ -31,9 +31,9 @@ abstract class SnackSearchEngine {
             })
             .reverse();
     }
-    private static searchCacheTtl = 60 * 60 * 10; // Seconds * Minutes * Hours
+    private static searchCacheTtl: number = 60 * 60 * 10; // Seconds * Minutes * Hours
 
-    private static maxSnackSimilarity = 0.8; // 0 to 1 based on text similarity
+    private static maxSnackSimilarity: number = 0.8; // 0 to 1 based on text similarity
 
     public async search(queryText: string): Promise<Snack[]> {
         const searchCacheKey = `snack-search:${this.engineName}:${queryText}`;

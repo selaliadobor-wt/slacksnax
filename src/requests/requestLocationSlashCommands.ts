@@ -11,7 +11,7 @@ export const AddSnaxLocationSlashCommand = "/addSnaxLocation";
 
 const slack = createTypedSlackWebClient();
 
-export function registerSlashCommands() {
+export function registerSlashCommands(): void {
     SlashCommandManagerInstance.registerSlashCommand(UpdateSnaxLocationSlashCommand, async (request, reply) => {
         await LocationManangerInstance.promptForUserLocation(
             "Set your location!",

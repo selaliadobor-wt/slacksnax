@@ -1,8 +1,9 @@
+import { Model } from "mongoose";
 import { InstanceType, ModelType, prop, staticMethod, Typegoose } from "typegoose";
 import { v4 as uuid } from "uuid";
 
 export class SnackRequestLocation extends Typegoose {
-    public static create(args: { name: string }) {
+    public static create(args: { name: string }): SnackRequestLocation {
         const field = new SnackRequestLocation();
 
         field.name = args.name;
@@ -11,7 +12,7 @@ export class SnackRequestLocation extends Typegoose {
     }
 
     @staticMethod
-    public static getModelForTeam(teamId: string) {
+    public static getModelForTeam(teamId: string): Model<InstanceType<SnackRequestLocation>> {
         return new SnackRequestLocation().getModelForClass(SnackRequestLocation, {
             schemaOptions: { timestamps: true, collection: `snack-request-locations-${teamId}` },
         });

@@ -214,7 +214,7 @@ async function getAllUsersFromTeam(token: string, includeBots: boolean = false):
     return includeBots ? users : users.filter(user => !(user.is_bot || user.id === "USLACKBOT"));
 }
 
-async function getUserProfile(userId: string, token: string) {
+async function getUserProfile(userId: string, token: string): Promise<SlackUsersProfile> {
     const profileResponse = (await slack.users.profile.get({
         token,
         user: userId,
@@ -232,13 +232,13 @@ class SlackResponseUrlReplier {
     constructor(responseUrl: string) {
         this.responseUrl = responseUrl;
     }
-    public async rawJson(body: object) {
+    public async rawJson(body: object): Promise<void> {
         await rp.post(this.responseUrl, {
             json: true,
             body,
         });
     }
-    public async unformattedText(text: string, replaceOriginal?: boolean, deleteOriginal?: boolean) {
+    public async unformattedText(text: string, replaceOriginal?: boolean, deleteOriginal?: boolean): Promise<void> {
         await rp.post(this.responseUrl, {
             json: true,
             body: {

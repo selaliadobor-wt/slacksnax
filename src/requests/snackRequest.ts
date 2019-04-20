@@ -1,3 +1,4 @@
+import { Model } from "mongoose";
 import { index, InstanceType, ModelType, prop, staticMethod, Typegoose } from "typegoose";
 import { Snack } from "../snackSearch/snack";
 import { SnackRequester } from "./snackRequester";
@@ -15,7 +16,7 @@ export class SnackRequest extends Typegoose {
         initialRequester: SnackRequester;
         location: SnackRequestLocation;
         originalRequestString: string;
-    }) {
+    }): SnackRequest {
         const field = new SnackRequest();
         field.originalRequestString = args.originalRequestString;
         field.snack = args.snack;
@@ -25,7 +26,7 @@ export class SnackRequest extends Typegoose {
     }
 
     @staticMethod
-    public static getModelForTeam(teamId: string) {
+    public static getModelForTeam(teamId: string): Model<InstanceType<SnackRequest>> {
         return new SnackRequest().getModelForClass(SnackRequest, {
             schemaOptions: { timestamps: true, collection: `snack-requests-${teamId}` },
         });
@@ -42,7 +43,7 @@ export class SnackRequest extends Typegoose {
     @prop({ required: true })
     public originalRequestString!: string;
 
-    public getInitialRequester() {
+    public getInitialRequester(): SnackRequester {
         return this.requesters[0];
     }
 }

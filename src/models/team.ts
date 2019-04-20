@@ -9,7 +9,7 @@ export class Team extends Typegoose {
     public userId: string;
     @prop({ required: true })
     public accessToken: string;
-    constructor({});
+    constructor({  }: any);
     constructor(args: { teamId: string; teamName: string; userId: string; accessToken: string }) {
         super();
 

@@ -6,6 +6,8 @@ import { SnackRequest } from "./snackRequest";
 import { SnackRequester } from "./snackRequester";
 import { SnackRequestLocation } from "./snackRequestLocation";
 
+import { InstanceType } from "typegoose";
+
 export enum SnackRequestResultType {
     CreatedNew,
     RequestAddedForExisting,
@@ -15,11 +17,11 @@ export enum SnackRequestResultType {
 
 export interface SnackRequestResult {
     type: SnackRequestResultType;
-    request: SnackRequest | null;
+    request?: SnackRequest;
 }
 class RequestManager {
-    public minRequestNameSimiliarity = 0.7;
-    public minRequestDescriptionSimiliarity = 0.8;
+    public minRequestNameSimiliarity: number = 0.7;
+    public minRequestDescriptionSimiliarity: number = 0.8;
 
     public getSnackSimilarity(
         snackA: Snack,
@@ -49,7 +51,7 @@ class RequestManager {
         snack: Snack,
         location: SnackRequestLocation,
         requestString: string,
-        forceNewIfSimilar = false
+        forceNewIfSimilar: boolean = false
     ): Promise<SnackRequestResult> {
         let isExistingRequestSimilar = false;
         let isExistingExactlySame = false;
@@ -118,20 +120,30 @@ class RequestManager {
         }
     }
 
-    private async findSnackRequestByText(teamId: string, location: SnackRequestLocation, text: string) {
+    private async findSnackRequestByText(
+        teamId: string,
+        location: SnackRequestLocation,
+        text: string
+    ): Promise<InstanceType<SnackRequest> | undefined> {
         const results = await SnackRequest.getModelForTeam(teamId)
             .find({ $text: { $search: text }, "location.id": location.id }, { score: { $meta: "textScore" } }, {})
             .sort({ score: { $meta: "textScore" } })
             .limit(1);
 
-        return results[0];
+        return results[0] || undefined;
     }
 
-    private async findSnackRequestByUpc(teamId: string, location: SnackRequestLocation, upc: string) {
-        return SnackRequest.getModelForTeam(teamId).findOne({
-            "snack.upc": upc,
-            "location.id": location.id,
-        });
+    private async findSnackRequestByUpc(
+        teamId: string,
+        location: SnackRequestLocation,
+        upc: string
+    ): Promise<InstanceType<SnackRequest> | undefined> {
+        return (
+            (await SnackRequest.getModelForTeam(teamId).findOne({
+                "snack.upc": upc,
+                "location.id": location.id,
+            })) || undefined
+        );
     }
 
     private async saveSnackRequest(
@@ -139,7 +151,7 @@ class RequestManager {
         requester: SnackRequester,
         location: SnackRequestLocation,
         originalRequestString: string
-    ) {
+    ): Promise<SnackRequest> {
         return SnackRequest.getModelForTeam(requester.teamId).create(
             SnackRequest.create({
                 snack,

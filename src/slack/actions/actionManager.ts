@@ -19,7 +19,7 @@ type ContextIdActionCallback = (
 
 class ActionManager {
     public callbacks: ActionCallback[] = [];
-    public contextCacheTtl = 60 * 5;
+    public contextCacheTtl: number = 60 * 5;
 
     public async setInteractionContext<T>(interactionType: string, context: T): Promise<string> {
         if (context === undefined) {

@@ -37,7 +37,7 @@ const getSnackRequestFields = (snack: Snack, requester: SnackRequester, except: 
     return except ? fields.filter(field => !except.includes(field.title)) : fields;
 };
 
-function getSlackJsonForCreatedRequest(snack: Snack, requester: SnackRequester) {
+function getSlackJsonForCreatedRequest(snack: Snack, requester: SnackRequester): any {
     return {
         attachments: [
             {
@@ -53,7 +53,7 @@ function getSlackJsonForCreatedRequest(snack: Snack, requester: SnackRequester) 
     };
 }
 
-function getSlackJsonForAlreadyRequestedRequest(snack: Snack, requester: SnackRequester) {
+function getSlackJsonForAlreadyRequestedRequest(snack: Snack, requester: SnackRequester): any {
     return {
         attachments: [
             {
@@ -107,7 +107,7 @@ function getSlackTextForSnack(snack: Snack, requestCallbackId: string): any[] {
     ];
 }
 
-export function registerSlashCommands() {
+export function registerSlashCommands(): void {
     SlashCommandManagerInstance.registerSlashCommand("/snacksearch", async (request, reply) => {
         const text = request.text;
         const location = await LocationManangerInstance.getRequestLocationForUser(request.user_id, request.team_id);

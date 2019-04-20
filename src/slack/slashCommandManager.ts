@@ -20,7 +20,7 @@ class SlashCommandManager {
     public fastify: fastify.FastifyInstance | undefined;
     public commands: Map<string, SlashCommandReplyCallback> = new Map();
 
-    public registerSlashCommand(endpointName: string, callback: SlashCommandReplyCallback) {
+    public registerSlashCommand(endpointName: string, callback: SlashCommandReplyCallback): void {
         if (!this.fastify) {
             throw new Error("The SlashCommandManager must be registered with fastify before use");
         }
@@ -32,7 +32,10 @@ class SlashCommandManager {
         });
     }
 
-    public async invokeSlashCommandForRequest(commandEndpoint: string, request: Definitions.SlashCommands.RequestBody) {
+    public async invokeSlashCommandForRequest(
+        commandEndpoint: string,
+        request: Definitions.SlashCommands.RequestBody
+    ): Promise<void> {
         const callback = this.commands.get(commandEndpoint);
         if (callback === undefined) {
             throw new Error("No slash command defined for endpoint: " + commandEndpoint);
@@ -47,7 +50,7 @@ class SlashCommandManager {
         }
     }
 
-    public setFastifyInstance(instance: fastify.FastifyInstance) {
+    public setFastifyInstance(instance: fastify.FastifyInstance): void {
         this.fastify = instance;
     }
 }

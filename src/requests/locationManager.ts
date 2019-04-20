@@ -14,7 +14,7 @@ export interface UserLocationPromptContinuation {
 }
 
 class LocationMananger {
-    private readonly locationPromptType = "location-prompt";
+    private readonly locationPromptType: string = "location-prompt";
     constructor() {
         ActionManagerInstance.listenForCallbackIdOfType(this.locationPromptType, async (payload, reply) => {
             reply.code(200).send();
@@ -47,7 +47,7 @@ class LocationMananger {
         triggerId: string,
         responseUrl: string,
         continuation?: UserLocationPromptContinuation
-    ) {
+    ): Promise<void> {
         const team = await TeamModel.findOne({ teamId });
         if (team === null) {
             throw new Error("Failed to find your team");
@@ -82,7 +82,7 @@ class LocationMananger {
         });
     }
 
-    public async renameLocation(teamId: string, locationId: string, newName: string) {
+    public async renameLocation(teamId: string, locationId: string, newName: string): Promise<void> {
         const location = await SnackRequestLocation.getModelForTeam(teamId).findOne({ id: locationId });
         if (location === null) {
             throw new Error("No matching location found to rename");
@@ -107,7 +107,11 @@ class LocationMananger {
             return true;
         }
     }
-    public async setRequestLocationForUser(userId: string, teamId: string, location: SnackRequestLocation) {
+    public async setRequestLocationForUser(
+        userId: string,
+        teamId: string,
+        location: SnackRequestLocation
+    ): Promise<void> {
         const existingLocation = await UserLocation.getModelForTeam(teamId).findOne({ userId });
         if (existingLocation) {
             existingLocation.locationId = location.id;

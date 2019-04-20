@@ -1,7 +1,7 @@
 import { InstanceType, ModelType, prop, Typegoose } from "typegoose";
 
 export class SnackRequester {
-    public static create(args: { name: string; userId: string; teamId: string }) {
+    public static create(args: { name: string; userId: string; teamId: string }): SnackRequester {
         const field = new SnackRequester();
 
         field.name = args.name;
