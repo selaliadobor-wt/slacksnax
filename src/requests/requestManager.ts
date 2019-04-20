@@ -58,7 +58,7 @@ class RequestManager {
 
         let existingRequest =
             snack.upc !== undefined
-                ? await this.findSnackRequestByUpc(requester.teamId, location, snack.upc)
+                ? (await this.findSnackRequestByUpc(requester.teamId, location, snack.upc)) || undefined
                 : undefined;
 
         if (existingRequest === undefined) {
