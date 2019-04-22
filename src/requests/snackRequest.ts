@@ -1,5 +1,5 @@
 import { Model } from "mongoose";
-import { index, InstanceType, ModelType, prop, staticMethod, Typegoose } from "typegoose";
+import { index, instanceMethod, InstanceType, ModelType, prop, staticMethod, Typegoose } from "typegoose";
 import { Snack } from "../snackSearch/snack";
 import { SnackRequester } from "./snackRequester";
 import { SnackRequestLocation } from "./snackRequestLocation";
@@ -31,6 +31,11 @@ export class SnackRequest extends Typegoose {
             schemaOptions: { timestamps: true, collection: `snack-requests-${teamId}` },
         });
     }
+
+    public static getInitialRequester(snackRequest: SnackRequest): SnackRequester {
+        return snackRequest.requesters[0];
+    }
+
     @prop({ required: true })
     public snack!: Snack;
 
@@ -42,8 +47,4 @@ export class SnackRequest extends Typegoose {
 
     @prop({ required: true })
     public originalRequestString!: string;
-
-    public getInitialRequester(): SnackRequester {
-        return this.requesters[0];
-    }
 }

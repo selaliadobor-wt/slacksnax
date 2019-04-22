@@ -1,6 +1,6 @@
 import { InstanceType, ModelType, prop, Typegoose } from "typegoose";
 
-export class SnackRequester {
+export class SnackRequester extends Typegoose {
     public static create(args: { name: string; userId: string; teamId: string }): SnackRequester {
         const field = new SnackRequester();
 

@@ -1,6 +1,10 @@
+import { Document } from "mongoose";
+import { Definitions } from "typed-slack-client";
 import { LocationManangerInstance } from "../requests/locationManager";
 import { RequestManagerInstance, SnackRequestResultType } from "../requests/requestManager";
+import { SnackRequest } from "../requests/snackRequest";
 import { SnackRequester } from "../requests/snackRequester";
+import { SnackRequestLocation } from "../requests/snackRequestLocation";
 import { logger } from "../server";
 import { ActionManagerInstance } from "../slack/actions/actionManager";
 import { SlackResponseUrlReplier } from "../slack/slackUtils";
@@ -8,16 +12,25 @@ import { SlashCommandManagerInstance } from "../slack/slashCommandManager";
 import { flatten } from "../util";
 import { searchAllEngines } from "./searchEngineUtils";
 import { Snack } from "./snack";
+import { InstanceType } from "typegoose";
 
 const snackSearchRequestButtonInteractionId = "snack-search-request-button";
 const createRequestButtonAction = "createNewRequest";
+const similarRequestInteractionId = "resolve-similar-request";
+const similarRequestCreateValue = "create-request";
+const similarRequestVoteValue = "vote-for-request";
 
 interface CreateRequestButtonContext {
     requester: SnackRequester;
     snack: Snack;
     text: string;
+    location: SnackRequestLocation;
 }
-const getSnackRequestFields = (snack: Snack, requester: SnackRequester, except: string[]) => {
+interface ResolveSimilarRequestContext {
+    existingRequest: SnackRequest;
+    createContext: CreateRequestButtonContext;
+}
+const getSnackRequestFields = (snack: Snack, requester: SnackRequester, except: string[]): any => {
     let fields = [
         {
             title: "First Requested By",
@@ -25,7 +38,8 @@ const getSnackRequestFields = (snack: Snack, requester: SnackRequester, except: 
             short: true,
         },
     ];
-    if (snack.description !== undefined) {
+
+    if (snack.description !== null && snack.description !== undefined) {
         fields.concat({
             title: "Description",
             value: snack.description.length < 20 ? snack.description : snack.description.slice(0, 20) + "…",
@@ -37,6 +51,95 @@ const getSnackRequestFields = (snack: Snack, requester: SnackRequester, except: 
     return except ? fields.filter(field => !except.includes(field.title)) : fields;
 };
 
+interface SlackMessage {
+    title: string;
+    value: string | undefined;
+    short: boolean;
+}
+
+function getSlackJsonForSimilarRequest(existingRequest: SnackRequest, newSnack: Snack, requestCallbackId: string): any {
+    const fields: SlackMessage[] = [
+        {
+            title: "Your snack's name",
+            value: newSnack.name,
+            short: true,
+        },
+        {
+            title: "Already requested snack's name",
+            value: existingRequest.snack.name,
+            short: true,
+        },
+    ];
+
+    if (newSnack.description !== null) {
+        fields.push({
+            title: "Your snack's description",
+            value: newSnack.description,
+            short: true,
+        });
+    }
+
+    if (existingRequest.snack.description !== null) {
+        fields.push({
+            title: "Your snack's description",
+            value: existingRequest.snack.description,
+            short: true,
+        });
+    }
+
+    return {
+        text: "🤔 It looks like a similar request was made earlier...",
+        attachments: [
+            {
+                pretext: "Here's a comparision",
+                image_url: existingRequest.snack.imageUrl || undefined,
+                thumb_url: newSnack.imageUrl || undefined,
+                fields,
+            },
+            {
+                pretext: "Do you want to add a vote for the existing item?",
+                fallback: "Looks like your workspace hasn't enabled buttons...SlackSnax needs those",
+                callback_id: requestCallbackId,
+                color: "#3AA3E3",
+                attachment_type: "default",
+                actions: [
+                    {
+                        name: "addToExistingRequest",
+                        text: "✅ Sure",
+                        type: "button",
+                        value: similarRequestVoteValue,
+                    },
+                    {
+                        name: "createNewRequest",
+                        text: "🙅 No, make a new request",
+                        type: "button",
+                        value: similarRequestCreateValue,
+                    },
+                ],
+            },
+        ],
+        response_type: "ephemeral",
+        replace_original: true,
+        delete_original: true,
+    };
+}
+
+function getSlackJsonForAddedRequester(request: SnackRequest): any {
+    return {
+        attachments: [
+            {
+                // prettier-ignore
+                pretext: `${request.snack.name} was already added to the request list 😌
+I'll just make a note that you want that too ✅`,
+                image_url: request.snack.imageUrl,
+                fields: getSnackRequestFields(request.snack, SnackRequest.getInitialRequester(request), []),
+            },
+        ],
+        response_type: "ephemeral",
+        replace_original: true,
+        delete_original: true,
+    };
+}
 function getSlackJsonForCreatedRequest(snack: Snack, requester: SnackRequester): any {
     return {
         attachments: [
@@ -111,7 +214,7 @@ export function registerSlashCommands(): void {
     SlashCommandManagerInstance.registerSlashCommand("/snacksearch", async (request, reply) => {
         const text = request.text;
         const location = await LocationManangerInstance.getRequestLocationForUser(request.user_id, request.team_id);
-        if (location === null) {
+        if (location === null || location === undefined) {
             try {
                 await LocationManangerInstance.promptForUserLocation(
                     "Set your location first!",
@@ -155,6 +258,7 @@ export function registerSlashCommands(): void {
                             requester,
                             snack,
                             text,
+                            location,
                         }
                     );
                     return getSlackTextForSnack(snack, callbackId);
@@ -174,13 +278,51 @@ export function registerSlashCommands(): void {
 
         await reply.rawJson(response);
     });
+    ActionManagerInstance.listenForCallbackIdOfType(similarRequestInteractionId, async (payload, reply) => {
+        reply.code(200).send();
+        const action = payload.actions[0] as any;
+        const context = await ActionManagerInstance.getInteractionContext<ResolveSimilarRequestContext>(
+            payload.callback_id
+        );
+        const replier = new SlackResponseUrlReplier(payload.response_url);
+        if (context === undefined) {
+            await replier.unformattedText("Your search has expired 🙁");
+            return;
+        }
+        const didUserVote = action.value === similarRequestVoteValue;
+        const result = await RequestManagerInstance.requestSnack(
+            context.createContext.requester,
+            context.createContext.snack,
+            context.createContext.location,
+            context.createContext.text,
+            true,
+            didUserVote
+        );
+
+        switch (result.type) {
+            case SnackRequestResultType.AlreadyRequestedByUser:
+            case SnackRequestResultType.RequestAddedForExisting:
+                if (result.request === undefined) {
+                    throw new Error("Did not return result despite RequestAddedForExisting");
+                }
+                await replier.rawJson(getSlackJsonForAddedRequester(result.request));
+                break;
+            case SnackRequestResultType.CreatedNew:
+                await replier.rawJson(
+                    getSlackJsonForCreatedRequest(context.createContext.snack, context.createContext.requester)
+                );
+                break;
+        }
+    });
 
     ActionManagerInstance.listenForActionIdOfType(
         createRequestButtonAction,
         async (payload, reply, action, context) => {
             reply.send();
             const slackReply = await new SlackResponseUrlReplier(payload.response_url);
+
             await slackReply.unformattedText("Creating your request ⏳");
+
             const createContextId = (action as any).value;
             const createContext = await ActionManagerInstance.getInteractionContext<CreateRequestButtonContext>(
                 createContextId
@@ -191,20 +333,13 @@ export function registerSlashCommands(): void {
                 return;
             }
 
-            const userLocation = await LocationManangerInstance.getRequestLocationForUser(
-                payload.user.id,
-                payload.team.id
-            );
-            if (userLocation === undefined) {
-                await slackReply.unformattedText(`You need to set your location with \`/updateSnaxLocation\` first 🙁`);
-                return;
-            }
             const result = await RequestManagerInstance.requestSnack(
                 createContext.requester,
                 createContext.snack,
-                userLocation,
+                createContext.location,
                 createContext.text
             );
+
             switch (result.type) {
                 case SnackRequestResultType.CreatedNew:
                     await slackReply.rawJson(
@@ -217,10 +352,26 @@ export function registerSlashCommands(): void {
                     );
                     break;
                 case SnackRequestResultType.SimilarExists:
-                    await slackReply.unformattedText("Similar Request Exists");
+                    const existingRequest = result.request;
+                    if (!existingRequest) {
+                        throw new Error("Internal error: Existing request not returned for SimilarExists");
+                    }
+                    const callbackId = await ActionManagerInstance.setInteractionContext<ResolveSimilarRequestContext>(
+                        similarRequestInteractionId,
+                        {
+                            existingRequest,
+                            createContext,
+                        }
+                    );
+                    await slackReply.rawJson(
+                        getSlackJsonForSimilarRequest(result.request!, createContext.snack, callbackId)
+                    );
                     break;
                 case SnackRequestResultType.RequestAddedForExisting:
-                    await slackReply.unformattedText("Request Added For Existing");
+                    if (result.request === undefined) {
+                        throw new Error("Did not return result despite RequestAddedForExisting");
+                    }
+                    await slackReply.rawJson(getSlackJsonForAddedRequester(result.request));
                     break;
                 default:
                     break;

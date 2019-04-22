@@ -20,10 +20,13 @@ export interface SnackRequestResult {
     request?: SnackRequest;
 }
 class RequestManager {
-    public minRequestNameSimiliarity: number = 0.65;
+    public minRequestNameSimiliarity: number = 0.4;
     public minRequestDescriptionSimiliarity: number = 0.2;
     // If two products are from the same brand, their similiarity is multiplied by this ammount
     public sameBrandSimilarityMultiplier: number = 1.25;
+
+    public similarDescriptionThreshold: number = 0.5;
+    public similarDescriptionMultiplier: number = 1.25;
 
     public getSnackSimilarity(
         snackA: Snack,
@@ -38,20 +41,28 @@ class RequestManager {
                 similarity: 1,
             };
         }
-        let name = StringSimiliarity.compareTwoStrings(snackA.name || "", snackB.name || "");
+        let nameSimilarity = StringSimiliarity.compareTwoStrings(snackA.name || "", snackB.name || "");
 
-        let similarity = StringSimiliarity.compareTwoStrings(snackA.description || "", snackB.description || "");
+        let descriptionSimilarity = StringSimiliarity.compareTwoStrings(
+            snackA.description || "",
+            snackB.description || ""
+        );
 
-        if (snackA.brand !== undefined && snackB.brand !== undefined) {
+        if (snackA.brand != null && snackB.brand != null) {
             const sameBrand = snackA.brand.trim().toLocaleUpperCase() === snackB.brand.trim().toLocaleUpperCase();
             if (sameBrand) {
-                name *= this.sameBrandSimilarityMultiplier;
-                similarity *= this.sameBrandSimilarityMultiplier;
+                nameSimilarity *= this.sameBrandSimilarityMultiplier;
+                descriptionSimilarity *= this.sameBrandSimilarityMultiplier;
             }
         }
+
+        if (descriptionSimilarity > this.similarDescriptionThreshold) {
+            nameSimilarity *= this.similarDescriptionMultiplier;
+            descriptionSimilarity *= this.similarDescriptionMultiplier;
+        }
         return {
-            name,
-            similarity,
+            name: nameSimilarity,
+            similarity: descriptionSimilarity,
         };
     }
 
@@ -60,13 +71,14 @@ class RequestManager {
         snack: Snack,
         location: SnackRequestLocation,
         requestString: string,
-        forceNewIfSimilar: boolean = false
+        forceNewIfSimilar: boolean = false,
+        allowVote: boolean = false
     ): Promise<SnackRequestResult> {
         let isExistingRequestSimilar = false;
         let isExistingExactlySame = false;
 
         let existingRequest =
-            snack.upc !== undefined
+            snack.upc !== undefined && snack.upc !== null
                 ? (await this.findSnackRequestByUpc(requester.teamId, location, snack.upc)) || undefined
                 : undefined;
 
@@ -91,21 +103,25 @@ class RequestManager {
             }
         }
 
-        if ((isExistingExactlySame || isExistingRequestSimilar) && existingRequest) {
+        if (
+            (allowVote || !forceNewIfSimilar) &&
+            (isExistingExactlySame || isExistingRequestSimilar) &&
+            existingRequest
+        ) {
             logger.trace("Found existing snack request for request: " + JSON.stringify(existingRequest));
 
-            if (!isExistingExactlySame && !forceNewIfSimilar) {
+            if (!isExistingExactlySame && !forceNewIfSimilar && !allowVote) {
                 return {
                     type: SnackRequestResultType.SimilarExists,
                     request: existingRequest,
                 };
             }
 
-            const alreadyRequested = existingRequest.requesters.some(
-                existingRequester => existingRequester.userId === requester.userId
+            const alreadyRequestedByCurrentUser = existingRequest.requesters.some(
+                (existingRequester: SnackRequester) => existingRequester.userId === requester.userId
             );
 
-            if (alreadyRequested) {
+            if (alreadyRequestedByCurrentUser) {
                 return {
                     type: SnackRequestResultType.AlreadyRequestedByUser,
                     request: existingRequest,
