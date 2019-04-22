@@ -121,10 +121,10 @@ class RequestManager {
             }
         } else {
             logger.trace("Creating new snack request");
-            await this.saveSnackRequest(snack, requester, location, requestString);
+            const newRequest = await this.saveSnackRequest(snack, requester, location, requestString);
             return {
                 type: SnackRequestResultType.CreatedNew,
-                request: existingRequest,
+                request: newRequest,
             };
         }
     }
