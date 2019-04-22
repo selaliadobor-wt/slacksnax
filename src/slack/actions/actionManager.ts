@@ -105,7 +105,7 @@ class ActionManager {
                                 break;
                             }
                         } catch (err) {
-                            logger.error("Failed to process callback for action", err, request.body);
+                            logger.error("Failed to process callback for action", JSON.stringify(err), request.body);
                         }
                     }
                     if (!reply.sent) {
