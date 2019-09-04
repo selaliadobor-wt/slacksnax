@@ -7,4 +7,5 @@ export interface Snack {
     imageUrl?: string | null;
     upc?: string | null;
     productUrls?: { [source: string]: string | null };
+    searchEngineSource?: string | null;
 }

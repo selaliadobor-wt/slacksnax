@@ -56,7 +56,9 @@ abstract class SnackSearchEngine {
             logger.error(`Failed to write key "${searchCacheKey}" for "${queryText}" to Redis`, err);
         }
 
-        return SnackSearchEngine.sortByBestResult(queryText, snacks);
+        return SnackSearchEngine.sortByBestResult(queryText, snacks).map(snack => {
+            return { ...snack, searchEngineSource: this.engineName };
+        });
     }
     protected abstract async uncachedSearch(queryText: string): Promise<Snack[]>;
 }
