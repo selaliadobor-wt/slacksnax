@@ -12,13 +12,15 @@ import { SlashCommandManagerInstance } from "../slack/slashCommandManager";
 import { flatten } from "../util";
 import { searchAllEngines } from "./searchEngineUtils";
 import { Snack } from "./snack";
-import { InstanceType } from "typegoose";
 
 const snackSearchRequestButtonInteractionId = "snack-search-request-button";
 const createRequestButtonAction = "createNewRequest";
 const similarRequestInteractionId = "resolve-similar-request";
-const similarRequestCreateValue = "create-request";
-const similarRequestVoteValue = "vote-for-request";
+
+enum SimilarRequestResolution {
+    CreateNew = "create-request",
+    VoteForExisting = "vote-for-request",
+}
 
 interface CreateRequestButtonContext {
     requester: SnackRequester;
@@ -107,13 +109,13 @@ function getSlackJsonForSimilarRequest(existingRequest: SnackRequest, newSnack: 
                         name: "addToExistingRequest",
                         text: "✅ Sure",
                         type: "button",
-                        value: similarRequestVoteValue,
+                        value: SimilarRequestResolution.VoteForExisting,
                     },
                     {
                         name: "createNewRequest",
                         text: "🙅 No, make a new request",
                         type: "button",
-                        value: similarRequestCreateValue,
+                        value: SimilarRequestResolution.CreateNew,
                     },
                 ],
             },
@@ -289,29 +291,46 @@ export function registerSlashCommands(): void {
             await replier.unformattedText("Your search has expired 🙁");
             return;
         }
-        const didUserVote = action.value === similarRequestVoteValue;
-        const result = await RequestManagerInstance.requestSnack(
-            context.createContext.requester,
-            context.createContext.snack,
-            context.createContext.location,
-            context.createContext.text,
-            true,
-            didUserVote
-        );
 
-        switch (result.type) {
-            case SnackRequestResultType.AlreadyRequestedByUser:
-            case SnackRequestResultType.RequestAddedForExisting:
-                if (result.request === undefined) {
-                    throw new Error("Did not return result despite RequestAddedForExisting");
+        switch (action.value) {
+            case SimilarRequestResolution.VoteForExisting:
+                const existingRequest = await RequestManagerInstance.findRequestInDatabase(
+                    context.createContext.requester.teamId,
+                    context.existingRequest
+                );
+
+                if (existingRequest === undefined) {
+                    await RequestManagerInstance.createSnackRequest(
+                        context.createContext.snack,
+                        context.createContext.requester,
+                        context.createContext.location,
+                        context.createContext.text
+                    );
+                    await replier.unformattedText("That request no longer exists!");
+                    await replier.rawJson(
+                        getSlackJsonForCreatedRequest(context.createContext.snack, context.createContext.requester)
+                    );
+                } else {
+                    await RequestManagerInstance.addRequesterToSnackRequest(
+                        existingRequest,
+                        context.createContext.requester
+                    );
+                    await replier.rawJson(getSlackJsonForAddedRequester(existingRequest));
                 }
-                await replier.rawJson(getSlackJsonForAddedRequester(result.request));
                 break;
-            case SnackRequestResultType.CreatedNew:
+            case SimilarRequestResolution.CreateNew:
+                await RequestManagerInstance.createSnackRequest(
+                    context.createContext.snack,
+                    context.createContext.requester,
+                    context.createContext.location,
+                    context.createContext.text
+                );
                 await replier.rawJson(
                     getSlackJsonForCreatedRequest(context.createContext.snack, context.createContext.requester)
                 );
                 break;
+            default:
+                throw Error("Invalid Similar Request Resolution");
         }
     });
 
@@ -332,49 +351,40 @@ export function registerSlashCommands(): void {
                 await slackReply.unformattedText("Your search has expired 🙁");
                 return;
             }
-
-            const result = await RequestManagerInstance.requestSnack(
+            const existingRequestResult = await RequestManagerInstance.findExistingRequest(
                 createContext.requester,
                 createContext.snack,
                 createContext.location,
                 createContext.text
             );
 
-            switch (result.type) {
-                case SnackRequestResultType.CreatedNew:
-                    await slackReply.rawJson(
-                        getSlackJsonForCreatedRequest(createContext.snack, createContext.requester)
-                    );
-                    break;
-                case SnackRequestResultType.AlreadyRequestedByUser:
-                    await slackReply.rawJson(
-                        getSlackJsonForAlreadyRequestedRequest(createContext.snack, createContext.requester)
-                    );
-                    break;
-                case SnackRequestResultType.SimilarExists:
-                    const existingRequest = result.request;
-                    if (!existingRequest) {
-                        throw new Error("Internal error: Existing request not returned for SimilarExists");
+            if (existingRequestResult === undefined) {
+                await RequestManagerInstance.createSnackRequest(
+                    createContext.snack,
+                    createContext.requester,
+                    createContext.location,
+                    createContext.text
+                );
+                await slackReply.rawJson(getSlackJsonForCreatedRequest(createContext.snack, createContext.requester));
+                return;
+            }
+            const existingRequest = existingRequestResult[0];
+            const exactMatch = existingRequestResult[1];
+
+            if (exactMatch) {
+                await RequestManagerInstance.addRequesterToSnackRequest(existingRequest, createContext.requester);
+                await slackReply.rawJson(getSlackJsonForAddedRequester(existingRequest));
+            } else {
+                const callbackId = await ActionManagerInstance.setInteractionContext<ResolveSimilarRequestContext>(
+                    similarRequestInteractionId,
+                    {
+                        existingRequest,
+                        createContext,
                     }
-                    const callbackId = await ActionManagerInstance.setInteractionContext<ResolveSimilarRequestContext>(
-                        similarRequestInteractionId,
-                        {
-                            existingRequest,
-                            createContext,
-                        }
-                    );
-                    await slackReply.rawJson(
-                        getSlackJsonForSimilarRequest(result.request!, createContext.snack, callbackId)
-                    );
-                    break;
-                case SnackRequestResultType.RequestAddedForExisting:
-                    if (result.request === undefined) {
-                        throw new Error("Did not return result despite RequestAddedForExisting");
-                    }
-                    await slackReply.rawJson(getSlackJsonForAddedRequester(result.request));
-                    break;
-                default:
-                    break;
+                );
+                await slackReply.rawJson(
+                    getSlackJsonForSimilarRequest(existingRequest, createContext.snack, callbackId)
+                );
             }
         }
     );

@@ -65,15 +65,22 @@ class RequestManager {
             similarity: descriptionSimilarity,
         };
     }
+    public async findRequestInDatabase(
+        teamId: string,
+        request: SnackRequest
+    ): Promise<InstanceType<SnackRequest> | undefined> {
+        const result = await SnackRequest.getModelForTeam(teamId).findOne({
+            id: request.id,
+        });
+        return result || undefined;
+    }
 
-    public async requestSnack(
+    public async findExistingRequest(
         requester: SnackRequester,
         snack: Snack,
         location: SnackRequestLocation,
-        requestString: string,
-        forceNewIfSimilar: boolean = false,
-        allowVote: boolean = false
-    ): Promise<SnackRequestResult> {
+        requestString: string
+    ): Promise<[InstanceType<SnackRequest>, boolean] | undefined> {
         let isExistingRequestSimilar = false;
         let isExistingExactlySame = false;
 
@@ -102,47 +109,41 @@ class RequestManager {
                 }
             }
         }
+        return existingRequest === undefined || !isExistingRequestSimilar
+            ? undefined
+            : [existingRequest, isExistingExactlySame];
+    }
 
-        if (
-            (allowVote || !forceNewIfSimilar) &&
-            (isExistingExactlySame || isExistingRequestSimilar) &&
-            existingRequest
-        ) {
-            logger.trace("Found existing snack request for request: " + JSON.stringify(existingRequest));
+    public async addRequesterToSnackRequest(
+        existingRequest: InstanceType<SnackRequest>,
+        requester: SnackRequester
+    ): Promise<void> {
+        const alreadyRequested = existingRequest.requesters.some(
+            existingRequester =>
+                existingRequester.teamId === requester.teamId && existingRequester.userId === existingRequester.userId
+        );
 
-            if (!isExistingExactlySame && !forceNewIfSimilar && !allowVote) {
-                return {
-                    type: SnackRequestResultType.SimilarExists,
-                    request: existingRequest,
-                };
-            }
-
-            const alreadyRequestedByCurrentUser = existingRequest.requesters.some(
-                (existingRequester: SnackRequester) => existingRequester.userId === requester.userId
-            );
-
-            if (alreadyRequestedByCurrentUser) {
-                return {
-                    type: SnackRequestResultType.AlreadyRequestedByUser,
-                    request: existingRequest,
-                };
-            } else {
-                existingRequest.requesters.push(requester);
-                await existingRequest.save();
-
-                return {
-                    type: SnackRequestResultType.RequestAddedForExisting,
-                    request: existingRequest,
-                };
-            }
-        } else {
-            logger.trace("Creating new snack request");
-            const newRequest = await this.saveSnackRequest(snack, requester, location, requestString);
-            return {
-                type: SnackRequestResultType.CreatedNew,
-                request: newRequest,
-            };
+        if (alreadyRequested) {
+            return;
         }
+        existingRequest.requesters.push(requester);
+        await existingRequest.save();
+    }
+
+    public async createSnackRequest(
+        snack: Snack,
+        requester: SnackRequester,
+        location: SnackRequestLocation,
+        originalRequestString: string
+    ): Promise<SnackRequest> {
+        return SnackRequest.getModelForTeam(requester.teamId).create(
+            SnackRequest.create({
+                snack,
+                initialRequester: requester,
+                location,
+                originalRequestString,
+            })
+        );
     }
 
     private async findSnackRequestByText(
@@ -168,22 +169,6 @@ class RequestManager {
                 "snack.upc": upc,
                 "location.id": location.id,
             })) || undefined
-        );
-    }
-
-    private async saveSnackRequest(
-        snack: Snack,
-        requester: SnackRequester,
-        location: SnackRequestLocation,
-        originalRequestString: string
-    ): Promise<SnackRequest> {
-        return SnackRequest.getModelForTeam(requester.teamId).create(
-            SnackRequest.create({
-                snack,
-                initialRequester: requester,
-                location,
-                originalRequestString,
-            })
         );
     }
 }

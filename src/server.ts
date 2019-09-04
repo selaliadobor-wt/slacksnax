@@ -27,7 +27,6 @@ const start = async () => {
 
     (await import("./snackSearch/snackSearchSlashCommands")).registerSlashCommands();
     (await import("./requests/requestLocationSlashCommands")).registerSlashCommands();
-
     server.register(require("fastify-formbody"));
     server.register(fastifyMongoose, {
         uri: monogoUri,

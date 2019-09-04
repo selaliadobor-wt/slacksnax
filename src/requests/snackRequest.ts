@@ -1,5 +1,6 @@
 import { Model } from "mongoose";
 import { index, instanceMethod, InstanceType, ModelType, prop, staticMethod, Typegoose } from "typegoose";
+import { v1 as uuid } from "uuid";
 import { Snack } from "../snackSearch/snack";
 import { SnackRequester } from "./snackRequester";
 import { SnackRequestLocation } from "./snackRequestLocation";
@@ -22,6 +23,7 @@ export class SnackRequest extends Typegoose {
         field.snack = args.snack;
         field.requesters = [args.initialRequester];
         field.location = args.location;
+        field.id = uuid();
         return field;
     }
 
@@ -32,6 +34,7 @@ export class SnackRequest extends Typegoose {
         });
     }
 
+    @staticMethod
     public static getInitialRequester(snackRequest: SnackRequest): SnackRequester {
         return snackRequest.requesters[0];
     }
@@ -47,4 +50,13 @@ export class SnackRequest extends Typegoose {
 
     @prop({ required: true })
     public originalRequestString!: string;
+
+    @prop({ required: false })
+    public isFavorite!: boolean;
+
+    @prop({ required: false })
+    public isBlocked!: boolean;
+
+    @prop({ required: false, unique: true })
+    public id!: string;
 }
