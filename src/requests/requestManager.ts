@@ -120,7 +120,7 @@ class RequestManager {
     ): Promise<void> {
         const alreadyRequested = existingRequest.requesters.some(
             existingRequester =>
-                existingRequester.teamId === requester.teamId && existingRequester.userId === existingRequester.userId
+                existingRequester.teamId === requester.teamId && existingRequester.userId === requester.userId
         );
 
         if (alreadyRequested) {
